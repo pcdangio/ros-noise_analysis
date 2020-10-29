@@ -9,7 +9,7 @@ project(noise_analysis)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  topic_tools
+  message_introspection
 )
 
 ## System dependencies are found with CMake's conventions
