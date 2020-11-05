@@ -6,6 +6,7 @@ form_main::form_main(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::form_main)
 {
+    // Set up UI.
     ui->setupUi(this);
 
     // Set up node handle.

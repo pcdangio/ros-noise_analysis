@@ -3,7 +3,8 @@ QT += core gui widgets
 CONFIG += c++11
 
 INCLUDEPATH += \
-    /opt/ros/melodic/include
+    /opt/ros/melodic/include \
+    src
 
 FORMS += \
     src/gui/form_main.ui

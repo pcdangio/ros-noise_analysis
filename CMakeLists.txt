@@ -20,7 +20,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 find_package(Qt5 REQUIRED COMPONENTS
-    Widgets)
+    Widgets
+    Charts)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -155,6 +156,7 @@ add_executable(${PROJECT_NAME} src/main.cpp src/gui/form_main.cpp src/gui/form_m
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   Qt5::Widgets
+  Qt5::Charts
 )
 
 #############
