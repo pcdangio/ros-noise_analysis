@@ -2,6 +2,7 @@
 #include "ui_form_main.h"
 
 #include <QFileDialog>
+#include <QToolBar>
 
 // CONSTRUCTORS
 form_main::form_main(QWidget *parent)
@@ -10,12 +11,14 @@ form_main::form_main(QWidget *parent)
 {
     // Set up UI.
     form_main::ui->setupUi(this);
+    // Add toolbars.
+    form_main::setup_toolbar_table();
 
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
 
     // Connect form to data_set events.
-    connect(&(form_main::m_data_set), &data_set::bag_loaded, this, &form_main::on_bag_loaded);
+    connect(&(form_main::m_data_set), &data_set::bag_loaded, this, &form_main::bag_loaded);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -25,6 +28,76 @@ form_main::form_main(QWidget *parent)
 form_main::~form_main()
 {
     delete ui;
+}
+
+// UI
+void form_main::setup_toolbar_table()
+{
+    // Create new toolbar for table.
+    QToolBar* toolbar_table = new QToolBar(this);
+
+    // Add actions for field control.
+    auto action_add = toolbar_table->addAction(QIcon::fromTheme("list-add"), "Add field...");
+    auto action_remove = toolbar_table->addAction(QIcon::fromTheme("list-remove"), "Remove field");
+    auto action_clear = toolbar_table->addAction(QIcon::fromTheme("edit-clear"), "Clear all fields");
+
+    // Add actions for field movement.
+    toolbar_table->addSeparator();
+    auto action_up = toolbar_table->addAction(QIcon::fromTheme("go-up"), "Move field up");
+    auto action_down = toolbar_table->addAction(QIcon::fromTheme("go-down"), "Move field down");
+
+    // Add actions for analysis saving.
+    toolbar_table->addSeparator();
+    auto action_save = toolbar_table->addAction(QIcon::fromTheme("document-save"), "Save analysis...");
+    auto action_saveas = toolbar_table->addAction(QIcon::fromTheme("document-save-as"), "Save analysis as...");
+    auto action_open = toolbar_table->addAction(QIcon::fromTheme("document-open"), "Open analysis...");
+
+    // Add toolbar to table's layout.
+    form_main::ui->layout_table->insertWidget(0, toolbar_table);
+
+    // Make connections.
+    connect(action_add, &QAction::triggered, this, &form_main::toolbar_table_add);
+    connect(action_remove, &QAction::triggered, this, &form_main::toolbar_table_remove);
+    connect(action_clear, &QAction::triggered, this, &form_main::toolbar_table_clear);
+    connect(action_up, &QAction::triggered, this, &form_main::toolbar_table_up);
+    connect(action_down, &QAction::triggered, this, &form_main::toolbar_table_down);
+    connect(action_save, &QAction::triggered, this, &form_main::toolbar_table_save);
+    connect(action_saveas, &QAction::triggered, this, &form_main::toolbar_table_saveas);
+    connect(action_open, &QAction::triggered, this, &form_main::toolbar_table_open);
+}
+
+// SLOTS - TOOLBAR_TABLE
+void form_main::toolbar_table_add()
+{
+
+}
+void form_main::toolbar_table_remove()
+{
+
+}
+void form_main::toolbar_table_clear()
+{
+
+}
+void form_main::toolbar_table_up()
+{
+
+}
+void form_main::toolbar_table_down()
+{
+
+}
+void form_main::toolbar_table_save()
+{
+
+}
+void form_main::toolbar_table_saveas()
+{
+
+}
+void form_main::toolbar_table_open()
+{
+
 }
 
 // ROS
@@ -62,7 +135,7 @@ void form_main::on_button_open_bag_clicked()
     }
 }
 
-void form_main::on_bag_loaded()
+void form_main::bag_loaded()
 {
     // Update bag name line edit.
     form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_set.bag_name()));

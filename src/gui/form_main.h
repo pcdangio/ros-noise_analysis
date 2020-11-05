@@ -23,10 +23,21 @@ public:
 
 private slots:
     void on_button_open_bag_clicked();
-    void on_bag_loaded();
+
+    void toolbar_table_add();
+    void toolbar_table_remove();
+    void toolbar_table_clear();
+    void toolbar_table_up();
+    void toolbar_table_down();
+    void toolbar_table_save();
+    void toolbar_table_saveas();
+    void toolbar_table_open();
+
+    void bag_loaded();
 
 private:
     Ui::form_main *ui;
+    void setup_toolbar_table();
 
     // ROS
     /// \brief Stores the node's handle.

@@ -14,154 +14,152 @@
    <string>Noise Analysis</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTabWidget" name="tabs">
-    <property name="geometry">
-     <rect>
-      <x>321</x>
-      <y>9</y>
-      <width>276</width>
-      <height>293</height>
-     </rect>
-    </property>
-    <property name="currentIndex">
-     <number>0</number>
-    </property>
-    <widget class="QWidget" name="tab_data_view">
-     <attribute name="title">
-      <string>Data View</string>
-     </attribute>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QChartView" name="chartview"/>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="layout_spline">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QWidget" name="">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Maximum</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <layout class="QFormLayout" name="formLayout">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_bases">
+         <layout class="QHBoxLayout" name="layout_bag">
+          <item>
+           <widget class="QLabel" name="label_bag">
             <property name="text">
-             <string>Bases:</string>
+             <string>Bag:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QSlider" name="slider_bases">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+          <item>
+           <widget class="QLineEdit" name="lineedit_bag">
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_smoothness">
+          <item>
+           <widget class="QToolButton" name="button_open_bag">
             <property name="text">
-             <string>Smoothing:</string>
+             <string>...</string>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QSlider" name="slider_smoothness">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+            <property name="icon">
+             <iconset theme="document-open"/>
             </property>
            </widget>
           </item>
          </layout>
         </item>
         <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <layout class="QVBoxLayout" name="layout_table">
+          <property name="spacing">
+           <number>0</number>
           </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Maximum</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+          <item>
+           <widget class="QTableWidget" name="table">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QWidget" name="tab_covariance_matrix">
-     <attribute name="title">
-      <string>Covariance Matrix</string>
-     </attribute>
-    </widget>
-   </widget>
-   <widget class="QTableWidget" name="table">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>94</y>
-      <width>300</width>
-      <height>192</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>300</width>
-      <height>0</height>
-     </size>
-    </property>
-   </widget>
-   <widget class="QWidget" name="">
-    <property name="geometry">
-     <rect>
-      <x>60</x>
-      <y>20</y>
-      <width>212</width>
-      <height>27</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label_bag">
-       <property name="text">
-        <string>Bag:</string>
-       </property>
       </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineedit_bag">
-       <property name="readOnly">
-        <bool>true</bool>
+      <widget class="QTabWidget" name="tabs">
+       <property name="currentIndex">
+        <number>0</number>
        </property>
+       <widget class="QWidget" name="tab_data_view">
+        <attribute name="title">
+         <string>Data View</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QChartView" name="chartview"/>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="layout_spline">
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Maximum</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <layout class="QFormLayout" name="formLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_bases">
+               <property name="text">
+                <string>Bases:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QSlider" name="slider_bases">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_smoothness">
+               <property name="text">
+                <string>Smoothing:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSlider" name="slider_smoothness">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Maximum</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tab_covariance_matrix">
+        <attribute name="title">
+         <string>Covariance Matrix</string>
+        </attribute>
+       </widget>
       </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="button_open_bag">
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset theme="document-open"/>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <customwidgets>
