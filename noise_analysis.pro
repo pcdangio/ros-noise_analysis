@@ -8,14 +8,17 @@ INCLUDEPATH += \
     src
 
 FORMS += \
+    src/gui/form_field.ui \
     src/gui/form_main.ui
 
 HEADERS += \
     src/data_set.h \
+    src/gui/form_field.h \
     src/gui/form_main.h
 
 SOURCES += \
     src/data_set.cpp \
+    src/gui/form_field.cpp \
     src/gui/form_main.cpp \
     src/main.cpp
 
