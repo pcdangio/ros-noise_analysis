@@ -48,6 +48,6 @@ private:
     void ros_spin();
 
     // COMPONENTS
-    data_set m_data_set;
+    std::shared_ptr<data_set> m_data_set;
 };
 #endif // FORM_MAIN_H

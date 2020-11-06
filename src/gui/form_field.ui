@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>form_field</class>
- <widget class="QWidget" name="form_field">
+ <widget class="QDialog" name="form_field">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>640</width>
+    <height>480</height>
+   </size>
+  </property>
   <property name="windowTitle">
-   <string>Add Field</string>
+   <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -22,6 +28,9 @@
      <property name="columnCount">
       <number>3</number>
      </property>
+     <attribute name="headerStretchLastSection">
+      <bool>false</bool>
+     </attribute>
      <column>
       <property name="text">
        <string notr="true">1</string>
@@ -40,7 +49,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
@@ -59,12 +68,18 @@
        <property name="text">
         <string>Add</string>
        </property>
+       <property name="icon">
+        <iconset theme="list-add"/>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="button_cancel">
        <property name="text">
         <string>Cancel</string>
+       </property>
+       <property name="icon">
+        <iconset theme="cancel"/>
        </property>
       </widget>
      </item>

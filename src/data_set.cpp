@@ -14,6 +14,9 @@ bool data_set::load_bag(std::string bag_path)
     // Try to load the bag file.
     try
     {
+        // Close any open bag files.
+        data_set::m_bag.close();
+        // Open the new bag file.
         data_set::m_bag.open(bag_path, rosbag::bagmode::Read);
     }
     catch(const std::exception& error)
@@ -32,19 +35,49 @@ std::string data_set::bag_name() const
     boost::filesystem::path bag_path(data_set::m_bag.getFileName());
     return bag_path.filename().string();
 }
-std::vector<std::string> data_set::bag_topics() const
+std::set<std::string> data_set::bag_topics() const
 {
-    rosbag::View view(data_set::m_bag);
+    // Create set for tracking unique topic names.
+    std::set<std::string> unique_topics;
 
-    // Get information about connections.
-    auto connections = view.getConnections();
-
-    // Iterate through the connections to get the topic names.
-    std::vector<std::string> topics;
-    for(auto connection = connections.cbegin(); connection != connections.cend(); ++connection)
+    if(data_set::m_bag.isOpen())
     {
-        topics.push_back((*connection)->topic);
+        // Use a view to get the connections.
+        rosbag::View view(data_set::m_bag);
+        auto connections = view.getConnections();
+        // Iterate through the connections to get the topic names.
+        for(auto connection = connections.cbegin(); connection != connections.cend(); ++connection)
+        {
+            unique_topics.insert((*connection)->topic);
+        }
     }
 
-    return topics;
+    return unique_topics;
+}
+
+bool data_set::get_definition_tree(const std::string& topic, message_introspection::definition_tree_t &definition_tree) const
+{
+    // Check if bag file is open.
+    if(!data_set::m_bag.isOpen())
+    {
+        return false;
+    }
+
+    // Use a view to get the connection info for the topic.
+    rosbag::View view(data_set::m_bag, rosbag::TopicQuery(topic));
+    auto connections = view.getConnections();
+
+    // Check if the topic exists in the bag.
+    if(connections.empty())
+    {
+        return false;
+    }
+
+    // Build a temporary introspector to get the definition tree for the topic.
+    auto connection = connections.front();
+    message_introspection::introspector introspector;
+    introspector.new_message_type(connection->datatype, connection->msg_def, connection->md5sum);
+    definition_tree = introspector.definition_tree();
+
+    return true;
 }

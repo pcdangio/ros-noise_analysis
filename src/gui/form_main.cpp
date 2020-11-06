@@ -1,6 +1,8 @@
 #include "gui/form_main.h"
 #include "ui_form_main.h"
 
+#include "gui/form_field.h"
+
 #include <QFileDialog>
 #include <QToolBar>
 
@@ -14,11 +16,14 @@ form_main::form_main(QWidget *parent)
     // Add toolbars.
     form_main::setup_toolbar_table();
 
+    // Set up data_set.
+    form_main::m_data_set = std::make_shared<data_set>();
+
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
 
     // Connect form to data_set events.
-    connect(&(form_main::m_data_set), &data_set::bag_loaded, this, &form_main::bag_loaded);
+    connect(form_main::m_data_set.get(), &data_set::bag_loaded, this, &form_main::bag_loaded);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -69,7 +74,9 @@ void form_main::setup_toolbar_table()
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()
 {
-
+    // Show form for adding field.
+    form_field dialog(form_main::m_data_set);
+    dialog.exec();
 }
 void form_main::toolbar_table_remove()
 {
@@ -129,7 +136,7 @@ void form_main::on_button_open_bag_clicked()
     }
 
     // Try to load bag file.
-    if(!form_main::m_data_set.load_bag(dialog.selectedFiles().front().toStdString()))
+    if(!form_main::m_data_set->load_bag(dialog.selectedFiles().front().toStdString()))
     {
         QMessageBox::warning(this, "Error", "Error loading bag file. See ROS log for more information.");
     }
@@ -138,5 +145,5 @@ void form_main::on_button_open_bag_clicked()
 void form_main::bag_loaded()
 {
     // Update bag name line edit.
-    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_set.bag_name()));
+    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_set->bag_name()));
 }
