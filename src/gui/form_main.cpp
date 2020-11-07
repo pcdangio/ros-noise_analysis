@@ -16,14 +16,11 @@ form_main::form_main(QWidget *parent)
     form_main::setup_tree_message();
     form_main::setup_toolbar_table();
 
-    // Set up data_interface.
-    form_main::m_data_interface = std::make_shared<data_interface>();
-
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
 
     // Connect form to data_interface events.
-    connect(form_main::m_data_interface.get(), &data_interface::bag_loaded, this, &form_main::bag_loaded);
+    connect(&(form_main::m_data_interface), &data_interface::bag_loaded, this, &form_main::bag_loaded);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -52,7 +49,6 @@ void form_main::setup_tree_message()
     form_main::ui->tree_message->header()->setDefaultAlignment(Qt::AlignHCenter);
     form_main::ui->tree_message->header()->setSectionResizeMode(0, QHeaderView::ResizeMode::Stretch);
     form_main::ui->tree_message->header()->setSectionResizeMode(1, QHeaderView::ResizeMode::Interactive);
-    form_main::ui->tree_message->setColumnWidth(1, 200);
 
     // Initialize combobox.
     form_main::ui->combobox_topics->addItem("Select topic...");
@@ -99,21 +95,49 @@ void form_main::update_combobox_topics()
 
     // Add new topics.
     form_main::ui->combobox_topics->addItem("Select topic...");
-    auto topics = form_main::m_data_interface->bag_topics();
+    auto topics = form_main::m_data_interface.bag_topics();
     for(auto topic = topics.cbegin(); topic != topics.cend(); ++topic)
     {
         form_main::ui->combobox_topics->addItem(QString::fromStdString(*topic));
     }
 }
-void form_main::update_tree_message(const message_introspection::definition_tree_t& definition_tree)
+void form_main::update_tree_message(bool clear)
 {
+    // Clear the current tree contents.
+    form_main::ui->tree_message->clear();
 
+    // If this is just a clearing operation, quit.
+    if(clear)
+    {
+        return;
+    }
+
+    // Create root tree item.
+    QTreeWidgetItem* root_item = new QTreeWidgetItem();
+
+    // Recursively add tree items.
+    form_main::add_tree_item(form_main::m_candidate_topic_definition_tree, root_item);
+
+    // Update root item's empty name to topic name.
+    root_item->setText(0, QString::fromStdString(form_main::m_candidate_topic_name));
+
+    // Add root item to tree widget.
+    form_main::ui->tree_message->addTopLevelItem(root_item);
+
+    // Resize type column.
+    form_main::ui->tree_message->resizeColumnToContents(1);
+
+    // Expand all items.
+    form_main::ui->tree_message->expandAll();
 }
 void form_main::add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item)
 {
     // Set the item's data.
-    item->setText(0, QString::fromStdString(definition_tree.definition.name()));
+    item->setText(0, QString::fromStdString(definition_tree.definition.name() + definition_tree.definition.array()));
     item->setText(1, QString::fromStdString(definition_tree.definition.type()));
+
+    // Store the field's path in the user data.
+    item->setData(0, Qt::ItemDataRole::UserRole, QString::fromStdString(definition_tree.definition.path()));
 
     // Add children.
     for(auto field = definition_tree.fields.cbegin(); field != definition_tree.fields.cend(); ++field)
@@ -190,7 +214,7 @@ void form_main::on_button_open_bag_clicked()
     }
 
     // Try to load bag file.
-    if(!form_main::m_data_interface->load_bag(dialog.selectedFiles().front().toStdString()))
+    if(!form_main::m_data_interface.load_bag(dialog.selectedFiles().front().toStdString()))
     {
         QMessageBox::warning(this, "Error", "Error loading bag file. See ROS log for more information.");
     }
@@ -199,8 +223,24 @@ void form_main::on_button_open_bag_clicked()
 void form_main::bag_loaded()
 {
     // Update bag name line edit.
-    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_interface->bag_name()));
+    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_interface.bag_name()));
 
     // Update topics combobox.
     form_main::update_combobox_topics();
+}
+
+void form_main::on_combobox_topics_currentTextChanged(const QString& text)
+{
+    // Update candidate topic/definition tree.
+    form_main::m_candidate_topic_name = text.toStdString();
+    bool topic_exists = form_main::m_data_interface.get_topic_definition(form_main::m_candidate_topic_name, form_main::m_candidate_topic_definition_tree);
+
+    // Update the message tree view.
+    // Clear if topic does not exist.
+    form_main::update_tree_message(!topic_exists);
+}
+
+void form_main::on_tree_message_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+{
+
 }

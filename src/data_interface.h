@@ -21,14 +21,15 @@ public:
     std::string bag_name() const;
     std::set<std::string> bag_topics() const;
 
-    bool get_definition_tree(const std::string& topic, message_introspection::definition_tree_t& definition_tree) const;
+    bool get_topic_definition(const std::string& topic, message_introspection::definition_tree_t& definition_tree) const;
+
+    bool add_dataset(const std::string& topic, const std::string& path);
 
 signals:
     void bag_loaded();
 
 private:
     rosbag::Bag m_bag;
-
 };
 
 #endif

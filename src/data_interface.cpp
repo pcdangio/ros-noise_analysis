@@ -55,7 +55,7 @@ std::set<std::string> data_interface::bag_topics() const
     return unique_topics;
 }
 
-bool data_interface::get_definition_tree(const std::string& topic, message_introspection::definition_tree_t &definition_tree) const
+bool data_interface::get_topic_definition(const std::string& topic, message_introspection::definition_tree_t& definition_tree) const
 {
     // Check if bag file is open.
     if(!data_interface::m_bag.isOpen())

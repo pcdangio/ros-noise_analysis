@@ -35,6 +35,10 @@ private slots:
 
     void bag_loaded();
 
+    void on_combobox_topics_currentTextChanged(const QString& text);
+
+    void on_tree_message_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+
 private:
     Ui::form_main *ui;
     void setup_splitter();
@@ -42,7 +46,7 @@ private:
     void setup_toolbar_table();
 
     void update_combobox_topics();
-    void update_tree_message(const message_introspection::definition_tree_t& definition_tree);
+    void update_tree_message(bool clear = false);
     void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item);
 
     // ROS
@@ -54,6 +58,11 @@ private:
     void ros_spin();
 
     // COMPONENTS
-    std::shared_ptr<data_interface> m_data_interface;
+    data_interface m_data_interface;
+
+    std::string m_candidate_topic_name;
+    message_introspection::definition_tree_t m_candidate_topic_definition_tree;
+
+
 };
 #endif // FORM_MAIN_H
