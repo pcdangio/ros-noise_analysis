@@ -5,8 +5,11 @@ using namespace models;
 definition_tree_model::definition_tree_model(QObject* parent)
     : QAbstractItemModel(parent)
 {
+    // Initialize pointers.
+    definition_tree_model::m_root_item = nullptr;
+
     // Set a blank definition tree.
-    definition_tree_model::set_definition_tree(message_introspection::definition_tree_t());
+    definition_tree_model::set_definition_tree("", message_introspection::definition_tree_t());
 }
 definition_tree_model::~definition_tree_model()
 {
@@ -14,20 +17,40 @@ definition_tree_model::~definition_tree_model()
     delete definition_tree_model::m_root_item;
 }
 
-void definition_tree_model::set_definition_tree(const message_introspection::definition_tree_t& definition_tree)
+void definition_tree_model::set_definition_tree(const std::string& topic, const message_introspection::definition_tree_t& definition_tree)
 {
+    // Indicate that the model is being reset.
+    definition_tree_model::beginInsertRows()
+
     // Initialize new root item.
+    delete definition_tree_model::m_root_item;
     definition_tree_model::m_root_item = new definition_tree_item(nullptr);
 
     // Recurse through tree.
     definition_tree_model::add_definition_tree(definition_tree, definition_tree_model::m_root_item);
 
-    // Signal updated items.
-    //emit definition_tree_model::
+    // Fix the root item's name.
+    definition_tree_model::m_root_item->definition.update_name(topic);
+
+    // Indicate that the model has been reset.
+    definition_tree_model::endResetModel();
 }
 void definition_tree_model::add_definition_tree(const message_introspection::definition_tree_t& definition_tree, definition_tree_item* item)
 {
+    // Store this tree's definition.
+    item->definition = definition_tree.definition;
+    // Initialize the array index.
+    item->indexed_element = 0;
 
+    // Iterate through children.
+    for(auto field = definition_tree.fields.cbegin(); field != definition_tree.fields.cend(); ++field)
+    {
+        // Add a new child item.
+        auto child = item->add_child(field->definition);
+
+        // Recurse into field/child.
+        definition_tree_model::add_definition_tree(*field, child);
+    }
 }
 
 QVariant definition_tree_model::headerData(int32_t section, Qt::Orientation orientation, int32_t role) const
@@ -57,9 +80,10 @@ QVariant definition_tree_model::headerData(int32_t section, Qt::Orientation orie
         }
     }
 }
-
+#include <ros/console.h>
 QVariant definition_tree_model::data(const QModelIndex& index, int32_t role) const
 {
+    ROS_ERROR_STREAM("get data");
     // Check for valid index.
     if(!index.isValid())
     {
@@ -74,25 +98,22 @@ QVariant definition_tree_model::data(const QModelIndex& index, int32_t role) con
 
     // Get the item.
     auto item = definition_tree_model::get_item(index);
-    if(!item->definition)
-    {
-        return QVariant();
-    }
 
     // Display the desired piece of the definition.
     switch(index.column())
     {
         case 0:
         {
-            return QString::fromStdString(item->definition->name());
+            ROS_ERROR_STREAM(item->definition.name());
+            return QString::fromStdString(item->definition.name());
         }
         case 1:
         {
-            return QString::fromStdString(item->definition->type());
+            return QString::fromStdString(item->definition.type());
         }
         case 2:
         {
-            if(item->definition->is_array())
+            if(item->definition.is_array())
             {
                 return QString::number(item->indexed_element);
             }
@@ -119,7 +140,7 @@ Qt::ItemFlags definition_tree_model::flags(const QModelIndex& index) const
     }
 
     // Only allow editing array index column and for items that are an array.
-    if(index.column() != 2 || !definition_tree_model::get_item(index)->definition->is_array())
+    if(index.column() != 2 || !definition_tree_model::get_item(index)->definition.is_array())
     {
         return QAbstractItemModel::flags(index);
     }

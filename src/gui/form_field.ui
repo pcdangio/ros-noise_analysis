@@ -24,35 +24,7 @@
     <widget class="QComboBox" name="combobox_topic"/>
    </item>
    <item>
-    <widget class="QTreeWidget" name="tree_message">
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="expandsOnDoubleClick">
-      <bool>false</bool>
-     </property>
-     <property name="columnCount">
-      <number>3</number>
-     </property>
-     <attribute name="headerStretchLastSection">
-      <bool>false</bool>
-     </attribute>
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string notr="true">2</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string notr="true">3</string>
-      </property>
-     </column>
-    </widget>
+    <widget class="QTreeView" name="tree_message"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">

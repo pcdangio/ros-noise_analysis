@@ -39,7 +39,7 @@ uint32_t definition_tree_item::get_parent_index() const
     return 0;
 }
 
-void definition_tree_item::add_child(const message_introspection::definition_t *definition)
+definition_tree_item *definition_tree_item::add_child(const message_introspection::definition_t &definition)
 {
     // Create new item instance.
     definition_tree_item* new_item = new definition_tree_item(this);
@@ -49,6 +49,8 @@ void definition_tree_item::add_child(const message_introspection::definition_t *
     new_item->indexed_element = 0;
 
     definition_tree_item::m_children.push_back(new_item);
+
+    return new_item;
 }
 uint32_t definition_tree_item::n_children() const
 {

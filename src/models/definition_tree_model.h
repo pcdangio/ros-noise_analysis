@@ -17,7 +17,7 @@ public:
     definition_tree_model(QObject* parent = nullptr);
     ~definition_tree_model();
 
-    void set_definition_tree(const message_introspection::definition_tree_t& definition_tree);
+    void set_definition_tree(const std::string& topic, const message_introspection::definition_tree_t& definition_tree);
 
     QVariant headerData(int32_t section, Qt::Orientation orientation, int32_t role = Qt::ItemDataRole::DisplayRole) const override;
 
@@ -35,7 +35,6 @@ public:
     uint32_t get_array_index(const QModelIndex& index) const;
 
 private:
-    message_introspection::definition_tree_t m_definition_tree;
     definition_tree_item* m_root_item;
 
     void add_definition_tree(const message_introspection::definition_tree_t& definition_tree, definition_tree_item* item);

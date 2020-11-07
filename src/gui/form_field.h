@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+
+
 namespace Ui {
 class form_field;
 }
@@ -20,16 +22,10 @@ public:
 private slots:
     void on_combobox_topic_currentIndexChanged(const QString& string);
 
-    void on_tree_message_itemDoubleClicked(QTreeWidgetItem *item, int column);
-
 private:
     Ui::form_field *ui;
 
     std::shared_ptr<data_set> m_data_set;
-
-    std::vector<message_introspection::definition_t> m_tree_definitions;
-
-    void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* tree);
 };
 
 #endif // FORM_FIELD_H

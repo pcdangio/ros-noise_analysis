@@ -146,6 +146,8 @@ add_executable(${PROJECT_NAME}
     src/gui/form_main.ui
     src/gui/form_field.cpp
     src/gui/form_field.ui
+    src/models/definition_tree_item.cpp
+    src/models/definition_tree_model.cpp
     src/data_set.cpp)
 
 ## Rename C++ executable without prefix

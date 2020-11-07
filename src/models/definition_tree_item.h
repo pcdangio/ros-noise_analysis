@@ -14,11 +14,11 @@ public:
     definition_tree_item* parent() const;
     uint32_t get_parent_index() const;
 
-    void add_child(const message_introspection::definition_t* definition);
+    definition_tree_item* add_child(const message_introspection::definition_t& definition);
     uint32_t n_children() const;
     definition_tree_item* get_child(uint32_t index) const;
 
-    const message_introspection::definition_t* definition;
+    message_introspection::definition_t definition;
     uint32_t indexed_element;
 
 private:
