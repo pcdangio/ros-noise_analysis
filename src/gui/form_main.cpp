@@ -35,12 +35,13 @@ form_main::~form_main()
 // UI
 void form_main::setup_splitter()
 {
-    // Disable stretching of left panel.
-    form_main::ui->splitter->setStretchFactor(0, 0);
-    form_main::ui->splitter->setStretchFactor(1, 1);
+    // Set data splitter to stretch equally.
+    form_main::ui->splitter_fields->setStretchFactor(0,1);
+    form_main::ui->splitter_fields->setStretchFactor(1,1);
 
-    // Set dummy sizes that leverage the left panel's minimum size.
-    form_main::ui->splitter->setSizes({1,2});
+    // Set main splitter to stretch equally.
+    form_main::ui->splitter_main->setStretchFactor(0,1);
+    form_main::ui->splitter_main->setStretchFactor(1,1);
 }
 void form_main::setup_tree_message()
 {
@@ -75,7 +76,7 @@ void form_main::setup_toolbar_table()
     auto action_open = toolbar_table->addAction(QIcon::fromTheme("document-open"), "Open analysis...");
 
     // Add toolbar to table's layout.
-    form_main::ui->layout_table->insertWidget(0, toolbar_table);
+    form_main::ui->layout_fields->insertWidget(0, toolbar_table);
 
     // Make connections.
     connect(action_add, &QAction::triggered, this, &form_main::toolbar_table_add);
