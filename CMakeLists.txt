@@ -144,7 +144,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/gui/form_main.cpp
     src/gui/form_main.ui
-    src/data_set.cpp)
+    src/data_interface.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

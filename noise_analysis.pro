@@ -11,11 +11,11 @@ FORMS += \
     src/gui/form_main.ui
 
 HEADERS += \
-    src/data_set.h \
+    src/data_interface.h \
     src/gui/form_main.h
 
 SOURCES += \
-    src/data_set.cpp \
+    src/data_interface.cpp \
     src/gui/form_main.cpp \
     src/main.cpp
 

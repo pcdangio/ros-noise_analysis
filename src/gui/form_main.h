@@ -7,7 +7,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class form_main; }
 QT_END_NAMESPACE
 
-#include "data_set.h"
+#include "data_interface.h"
 
 #include <QTimer>
 
@@ -54,6 +54,6 @@ private:
     void ros_spin();
 
     // COMPONENTS
-    std::shared_ptr<data_set> m_data_set;
+    std::shared_ptr<data_interface> m_data_interface;
 };
 #endif // FORM_MAIN_H
