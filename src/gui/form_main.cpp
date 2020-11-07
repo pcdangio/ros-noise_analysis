@@ -105,6 +105,27 @@ void form_main::update_combobox_topics()
         form_main::ui->combobox_topics->addItem(QString::fromStdString(*topic));
     }
 }
+void form_main::update_tree_message(const message_introspection::definition_tree_t& definition_tree)
+{
+
+}
+void form_main::add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item)
+{
+    // Set the item's data.
+    item->setText(0, QString::fromStdString(definition_tree.definition.name()));
+    item->setText(1, QString::fromStdString(definition_tree.definition.type()));
+
+    // Add children.
+    for(auto field = definition_tree.fields.cbegin(); field != definition_tree.fields.cend(); ++field)
+    {
+        // Create new child item.
+        QTreeWidgetItem* child = new QTreeWidgetItem();
+        // Recurse into child item.
+        form_main::add_tree_item(*field, child);
+        // Add child to item.
+        item->addChild(child);
+    }
+}
 
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()

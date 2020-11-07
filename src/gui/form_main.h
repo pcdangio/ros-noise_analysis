@@ -42,6 +42,8 @@ private:
     void setup_toolbar_table();
 
     void update_combobox_topics();
+    void update_tree_message(const message_introspection::definition_tree_t& definition_tree);
+    void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item);
 
     // ROS
     /// \brief Stores the node's handle.
