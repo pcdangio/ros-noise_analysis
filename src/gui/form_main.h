@@ -37,7 +37,11 @@ private slots:
 
 private:
     Ui::form_main *ui;
+    void setup_splitter();
+    void setup_tree_message();
     void setup_toolbar_table();
+
+    void update_combobox_topics();
 
     // ROS
     /// \brief Stores the node's handle.

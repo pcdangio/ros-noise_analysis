@@ -1,8 +1,6 @@
 #include "gui/form_main.h"
 #include "ui_form_main.h"
 
-#include "gui/form_field.h"
-
 #include <QFileDialog>
 #include <QToolBar>
 
@@ -13,7 +11,9 @@ form_main::form_main(QWidget *parent)
 {
     // Set up UI.
     form_main::ui->setupUi(this);
-    // Add toolbars.
+    // Set up UI elements.
+    form_main::setup_splitter();
+    form_main::setup_tree_message();
     form_main::setup_toolbar_table();
 
     // Set up data_set.
@@ -36,6 +36,27 @@ form_main::~form_main()
 }
 
 // UI
+void form_main::setup_splitter()
+{
+    // Disable stretching of left panel.
+    form_main::ui->splitter->setStretchFactor(0, 0);
+    form_main::ui->splitter->setStretchFactor(1, 1);
+
+    // Set dummy sizes that leverage the left panel's minimum size.
+    form_main::ui->splitter->setSizes({1,2});
+}
+void form_main::setup_tree_message()
+{
+    // Set up treeview.
+    form_main::ui->tree_message->setHeaderLabels({"Name", "Type"});
+    form_main::ui->tree_message->header()->setDefaultAlignment(Qt::AlignHCenter);
+    form_main::ui->tree_message->header()->setSectionResizeMode(0, QHeaderView::ResizeMode::Stretch);
+    form_main::ui->tree_message->header()->setSectionResizeMode(1, QHeaderView::ResizeMode::Interactive);
+    form_main::ui->tree_message->setColumnWidth(1, 200);
+
+    // Initialize combobox.
+    form_main::ui->combobox_topics->addItem("Select topic...");
+}
 void form_main::setup_toolbar_table()
 {
     // Create new toolbar for table.
@@ -71,12 +92,24 @@ void form_main::setup_toolbar_table()
     connect(action_open, &QAction::triggered, this, &form_main::toolbar_table_open);
 }
 
+void form_main::update_combobox_topics()
+{
+    // Clear existing topics.
+    form_main::ui->combobox_topics->clear();
+
+    // Add new topics.
+    form_main::ui->combobox_topics->addItem("Select topic...");
+    auto topics = form_main::m_data_set->bag_topics();
+    for(auto topic = topics.cbegin(); topic != topics.cend(); ++topic)
+    {
+        form_main::ui->combobox_topics->addItem(QString::fromStdString(*topic));
+    }
+}
+
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()
 {
-    // Show form for adding field.
-    form_field dialog(form_main::m_data_set);
-    dialog.exec();
+
 }
 void form_main::toolbar_table_remove()
 {
@@ -146,4 +179,7 @@ void form_main::bag_loaded()
 {
     // Update bag name line edit.
     form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_set->bag_name()));
+
+    // Update topics combobox.
+    form_main::update_combobox_topics();
 }
