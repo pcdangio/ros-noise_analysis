@@ -25,6 +25,12 @@
    </item>
    <item>
     <widget class="QTreeWidget" name="tree_message">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="expandsOnDoubleClick">
+      <bool>false</bool>
+     </property>
      <property name="columnCount">
       <number>3</number>
      </property>
@@ -69,7 +75,8 @@
         <string>Add</string>
        </property>
        <property name="icon">
-        <iconset theme="list-add"/>
+        <iconset theme="list-add">
+         <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
      </item>
@@ -79,7 +86,8 @@
         <string>Cancel</string>
        </property>
        <property name="icon">
-        <iconset theme="cancel"/>
+        <iconset theme="cancel">
+         <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
      </item>

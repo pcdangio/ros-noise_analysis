@@ -35,6 +35,7 @@ void form_field::on_combobox_topic_currentIndexChanged(const QString& string)
 {
     // Clear the tree.
     form_field::ui->tree_message->clear();
+    form_field::m_tree_definitions.clear();
 
     // Populate the new tree.
     if(form_field::ui->combobox_topic->currentIndex() > 0)
@@ -74,6 +75,10 @@ void form_field::add_tree_item(const message_introspection::definition_tree_t& d
 
     // Set top level's format.
     tree->setTextAlignment(2, Qt::AlignmentFlag::AlignHCenter);
+    tree->setFlags(tree->flags() | Qt::ItemIsEditable);
+
+    // Add item's definition to the tracker list.
+    form_field::m_tree_definitions.push_back(definition_tree.definition);
 
     // Iterate through sub trees.
     for(auto field = definition_tree.fields.cbegin(); field != definition_tree.fields.cend(); ++field)
@@ -87,4 +92,9 @@ void form_field::add_tree_item(const message_introspection::definition_tree_t& d
         // Add item to parent tree.
         tree->addChild(item);
     }
+}
+
+void form_field::on_tree_message_itemDoubleClicked(QTreeWidgetItem *item, int column)
+{
+
 }
