@@ -37,10 +37,9 @@ private slots:
 
     void on_combobox_topics_currentTextChanged(const QString& text);
 
-    void on_tree_message_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-
 private:
     Ui::form_main *ui;
+
     void setup_splitter();
     void setup_tree_message();
     void setup_toolbar_table();

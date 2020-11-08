@@ -144,6 +144,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/gui/form_main.cpp
     src/gui/form_main.ui
+    src/gui/form_array.cpp
+    src/gui/form_array.ui
     src/data_interface.cpp)
 
 ## Rename C++ executable without prefix

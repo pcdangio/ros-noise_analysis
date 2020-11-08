@@ -1,6 +1,8 @@
 #include "gui/form_main.h"
 #include "ui_form_main.h"
 
+#include "gui/form_array.h"
+
 #include <QFileDialog>
 #include <QToolBar>
 
@@ -155,7 +157,61 @@ void form_main::add_tree_item(const message_introspection::definition_tree_t& de
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()
 {
+    // Get the currently selected item from tree_message.
+    auto selected_items = form_main::ui->tree_message->selectedItems();
+    if(selected_items.empty())
+    {
+        // Warn that no item is selected to add.
+        QMessageBox::warning(this, "Error", "You must select a message topic/field to add.");
+        return;
+    }
 
+    // Get the selected item's path.
+    std::string path = selected_items.front()->data(0, Qt::ItemDataRole::UserRole).toString().toStdString();
+
+    // Get the definition list for the path.
+    std::vector<message_introspection::definition_t> definitions;
+    if(!form_main::m_candidate_topic_definition_tree.get_path_definitions(path, definitions) || definitions.empty())
+    {
+        // Warn that the path does not exist.
+        QMessageBox::warning(this, "Error", "The specified path does not exist for the chosen topic/field.");
+        return;
+    }
+
+    // Check if the selected field is primitive.
+    if(!definitions.back().is_primitive())
+    {
+        // Warn that the selected path is not a primitive type.
+        QMessageBox::warning(this, "Error", "You may only add fields that are a primitive ROS message type.");
+        return;
+    }
+
+    // If this point reached, the path is valid and is a primitive type.
+    std::string selected_path = path;
+
+    // Update the path with array elements if necessary.
+    // Check if any of the path definitions are an array type.
+    bool has_array = false;
+    for(auto definition = definitions.cbegin(); definition != definitions.cend(); ++ definition)
+    {
+        if(definition->is_array())
+        {
+            has_array = true;
+            break;
+        }
+    }
+    if(has_array)
+    {
+        // Show form array to get the path.
+        form_array dialog(definitions, this);
+        if(!dialog.exec())
+        {
+            return;
+        }
+        selected_path = dialog.selected_path();
+    }
+
+    form_main::setWindowTitle(QString::fromStdString(selected_path));
 }
 void form_main::toolbar_table_remove()
 {
@@ -241,7 +297,3 @@ void form_main::on_combobox_topics_currentTextChanged(const QString& text)
     form_main::update_tree_message(!topic_exists);
 }
 
-void form_main::on_tree_message_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
-{
-
-}

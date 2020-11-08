@@ -29,20 +29,6 @@
          <item>
           <layout class="QHBoxLayout" name="layout_bag">
            <item>
-            <widget class="QLabel" name="label_bag">
-             <property name="text">
-              <string>Bag:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="lineedit_bag">
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QToolButton" name="button_open_bag">
              <property name="text">
               <string>...</string>
@@ -50,6 +36,16 @@
              <property name="icon">
               <iconset theme="document-open">
                <normaloff>.</normaloff>.</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineedit_bag">
+             <property name="text">
+              <string>Open bag file...</string>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
