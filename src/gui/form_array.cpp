@@ -4,6 +4,7 @@
 #include <QLineEdit>
 #include <QValidator>
 
+// CONSTRUCTORS
 form_array::form_array(const std::vector<message_introspection::definition_t>& path_definitions, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::form_array)
@@ -77,11 +78,7 @@ form_array::~form_array()
     delete ui;
 }
 
-std::string form_array::selected_path()
-{
-    return form_array::m_selected_path;
-}
-
+// SLOTS
 void form_array::on_buttonBox_accepted()
 {
     // Calculate selected path.
@@ -116,9 +113,14 @@ void form_array::on_buttonBox_accepted()
     // Signal that dialog as completed.
     form_array::done(QDialog::DialogCode::Accepted);
 }
-
 void form_array::on_buttonBox_rejected()
 {
     // Signal that dialog has been cancelled.
     form_array::done(QDialog::DialogCode::Rejected);
+}
+
+// METHODS
+std::string form_array::selected_path()
+{
+    return form_array::m_selected_path;
 }
