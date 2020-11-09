@@ -2,6 +2,8 @@
 #define DATA_INTERFACE_H
 
 #include "data/candidate_topic.h"
+#include "data/candidate_field.h"
+#include "data/dataset.h"
 
 #include <message_introspection/introspector.h>
 
@@ -10,6 +12,8 @@
 #include <QObject>
 
 #include <string>
+#include <deque>
+#include <unordered_set>
 
 namespace data {
 
@@ -26,11 +30,20 @@ public:
 
     std::shared_ptr<candidate_topic_t> get_candidate_topic(const std::string& topic_name) const;
 
+    void add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field);
+
+    uint32_t n_datasets() const;
+    std::shared_ptr<dataset> get_dataset(uint32_t index) const;
+
+
 signals:
     void bag_loaded();
+    void datasets_updated();
 
 private:
     rosbag::Bag m_bag;
+
+    std::deque<std::shared_ptr<dataset>> m_datasets;
 };
 
 }

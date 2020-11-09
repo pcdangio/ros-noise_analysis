@@ -35,6 +35,7 @@ private slots:
     void toolbar_table_open();
 
     void bag_loaded();
+    void datasets_updated();
 
     void on_combobox_topics_currentTextChanged(const QString& text);
 
@@ -44,10 +45,12 @@ private:
     void setup_splitter();
     void setup_tree_message();
     void setup_toolbar_table();
+    void setup_table_datasets();
 
     void update_combobox_topics();
     void update_tree_message();
     void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item);
+    void update_table_datasets();
 
     // ROS
     /// \brief Stores the node's handle.

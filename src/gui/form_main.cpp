@@ -18,12 +18,14 @@ form_main::form_main(QWidget *parent)
     form_main::setup_splitter();
     form_main::setup_tree_message();
     form_main::setup_toolbar_table();
+    form_main::setup_table_datasets();
 
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
 
     // Connect form to data_interface events.
     connect(&(form_main::m_data_interface), &data::data_interface::bag_loaded, this, &form_main::bag_loaded);
+    connect(&(form_main::m_data_interface), &data::data_interface::datasets_updated, this, &form_main::datasets_updated);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -91,6 +93,21 @@ void form_main::setup_toolbar_table()
     connect(action_saveas, &QAction::triggered, this, &form_main::toolbar_table_saveas);
     connect(action_open, &QAction::triggered, this, &form_main::toolbar_table_open);
 }
+void form_main::setup_table_datasets()
+{
+    // Set header captions.
+    form_main::ui->table_datasets->setHorizontalHeaderLabels({"Name", "Variance", "Path"});
+
+    // Set horizontal header sizers.
+    form_main::ui->table_datasets->setColumnWidth(0, 100);
+    form_main::ui->table_datasets->setColumnWidth(1, 100);
+    form_main::ui->table_datasets->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeMode::Fixed);
+    form_main::ui->table_datasets->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeMode::Fixed);
+    form_main::ui->table_datasets->horizontalHeader()->setStretchLastSection(true);
+
+    // Hide vertical header.
+    form_main::ui->table_datasets->verticalHeader()->setVisible(false);
+}
 
 void form_main::update_combobox_topics()
 {
@@ -154,6 +171,42 @@ void form_main::add_tree_item(const message_introspection::definition_tree_t& de
         item->addChild(child);
     }
 }
+void form_main::update_table_datasets()
+{
+    // Update table size.
+    form_main::ui->table_datasets->setRowCount(form_main::m_data_interface.n_datasets());
+
+    // Populate cells.
+    for(uint32_t i = 0; i < form_main::m_data_interface.n_datasets(); ++i)
+    {
+        // Get dataset pointer.
+        auto dataset = form_main::m_data_interface.get_dataset(i);
+
+        // Set name column.
+        auto item_name = new QTableWidgetItem();
+        item_name->setText(QString::fromStdString(dataset->name()));
+        item_name->setTextAlignment(Qt::AlignmentFlag::AlignCenter);
+        form_main::ui->table_datasets->setItem(i, 0, item_name);
+
+        // Set variance column.
+        auto item_variance = new QTableWidgetItem();
+        if(std::isnan(dataset->variance()))
+        {
+            item_variance->setText("-");
+        }
+        else
+        {
+            item_variance->setText(QString::number(dataset->variance()));
+        }
+        item_variance->setTextAlignment(Qt::AlignmentFlag::AlignCenter);
+        form_main::ui->table_datasets->setItem(i, 1, item_variance);
+
+        // Set path column
+        auto item_path = new QTableWidgetItem();
+        item_path->setText(QString::fromStdString(dataset->topic_name() + "::" + dataset->field_path()));
+        form_main::ui->table_datasets->setItem(i, 2, item_path);
+    }
+}
 
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()
@@ -192,7 +245,8 @@ void form_main::toolbar_table_add()
         }
     }
 
-    form_main::setWindowTitle(QString::fromStdString(candidate_field->full_path()));
+    // Add the candidate as a new dataset.
+    form_main::m_data_interface.add_dataset(candidate_field);
 }
 void form_main::toolbar_table_remove()
 {
@@ -265,6 +319,11 @@ void form_main::bag_loaded()
 
     // Update topics combobox.
     form_main::update_combobox_topics();
+}
+void form_main::datasets_updated()
+{
+    // Update datasets table.
+    form_main::update_table_datasets();
 }
 
 void form_main::on_combobox_topics_currentTextChanged(const QString& text)
