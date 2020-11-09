@@ -4,6 +4,8 @@
 
 #include <boost/filesystem/path.hpp>
 
+using namespace data;
+
 data_interface::data_interface()
 {
 
@@ -55,29 +57,33 @@ std::set<std::string> data_interface::bag_topics() const
     return unique_topics;
 }
 
-bool data_interface::get_topic_definition(const std::string& topic, message_introspection::definition_tree_t& definition_tree) const
+std::shared_ptr<candidate_topic_t> data_interface::get_candidate_topic(const std::string& topic_name) const
 {
     // Check if bag file is open.
     if(!data_interface::m_bag.isOpen())
     {
-        return false;
+        return nullptr;
     }
 
     // Use a view to get the connection info for the topic.
-    rosbag::View view(data_interface::m_bag, rosbag::TopicQuery(topic));
+    rosbag::View view(data_interface::m_bag, rosbag::TopicQuery(topic_name));
     auto connections = view.getConnections();
 
     // Check if the topic exists in the bag.
     if(connections.empty())
     {
-        return false;
+        return nullptr;
     }
 
     // Build a temporary introspector to get the definition tree for the topic.
     auto connection = connections.front();
-    message_introspection::introspector introspector;
+    message_introspection::introspector introspector;    
     introspector.new_message_type(connection->datatype, connection->msg_def, connection->md5sum);
-    definition_tree = introspector.definition_tree();
 
-    return true;
+    // Create an output candidate.
+    auto output = std::make_shared<candidate_topic_t>();
+    output->topic_name = topic_name;
+    output->definition_tree = introspector.definition_tree();
+
+    return output;
 }

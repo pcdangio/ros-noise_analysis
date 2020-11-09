@@ -12,12 +12,17 @@ FORMS += \
     src/gui/form_main.ui
 
 HEADERS += \
-    src/data_interface.h \
+    src/data/candidate_field.h \
+    src/data/candidate_topic.h \
+    src/data/dataset.h \
+    src/data/data_interface.h \
     src/gui/form_array.h \
     src/gui/form_main.h
 
 SOURCES += \
-    src/data_interface.cpp \
+    src/data/candidate_field.cpp \
+    src/data/dataset.cpp \
+    src/data/data_interface.cpp \
     src/gui/form_array.cpp \
     src/gui/form_main.cpp \
     src/main.cpp

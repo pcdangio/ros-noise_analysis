@@ -2,6 +2,7 @@
 #include "ui_form_main.h"
 
 #include "gui/form_array.h"
+#include "data/candidate_field.h"
 
 #include <QFileDialog>
 #include <QToolBar>
@@ -22,7 +23,7 @@ form_main::form_main(QWidget *parent)
     form_main::m_node = std::make_shared<ros::NodeHandle>();
 
     // Connect form to data_interface events.
-    connect(&(form_main::m_data_interface), &data_interface::bag_loaded, this, &form_main::bag_loaded);
+    connect(&(form_main::m_data_interface), &data::data_interface::bag_loaded, this, &form_main::bag_loaded);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -104,13 +105,13 @@ void form_main::update_combobox_topics()
         form_main::ui->combobox_topics->addItem(QString::fromStdString(*topic));
     }
 }
-void form_main::update_tree_message(bool clear)
+void form_main::update_tree_message()
 {
     // Clear the current tree contents.
     form_main::ui->tree_message->clear();
 
-    // If this is just a clearing operation, quit.
-    if(clear)
+    // Check if candidate topic is empty.
+    if(!form_main::m_candidate_topic)
     {
         return;
     }
@@ -119,10 +120,10 @@ void form_main::update_tree_message(bool clear)
     QTreeWidgetItem* root_item = new QTreeWidgetItem();
 
     // Recursively add tree items.
-    form_main::add_tree_item(form_main::m_candidate_topic_definition_tree, root_item);
+    form_main::add_tree_item(form_main::m_candidate_topic->definition_tree, root_item);
 
     // Update root item's empty name to topic name.
-    root_item->setText(0, QString::fromStdString(form_main::m_candidate_topic_name));
+    root_item->setText(0, QString::fromStdString(form_main::m_candidate_topic->topic_name));
 
     // Add root item to tree widget.
     form_main::ui->tree_message->addTopLevelItem(root_item);
@@ -169,49 +170,29 @@ void form_main::toolbar_table_add()
     // Get the selected item's path.
     std::string path = selected_items.front()->data(0, Qt::ItemDataRole::UserRole).toString().toStdString();
 
-    // Get the definition list for the path.
-    std::vector<message_introspection::definition_t> definitions;
-    if(!form_main::m_candidate_topic_definition_tree.get_path_definitions(path, definitions) || definitions.empty())
-    {
-        // Warn that the path does not exist.
-        QMessageBox::warning(this, "Error", "The specified path does not exist for the chosen topic/field.");
-        return;
-    }
+    // Create a new candidate field.
+    auto candidate_field = std::make_shared<data::candidate_field_t>(form_main::m_candidate_topic, path);
 
     // Check if the selected field is primitive.
-    if(!definitions.back().is_primitive())
+    if(!candidate_field->is_primitive())
     {
         // Warn that the selected path is not a primitive type.
         QMessageBox::warning(this, "Error", "You may only add fields that are a primitive ROS message type.");
         return;
     }
 
-    // If this point reached, the path is valid and is a primitive type.
-    std::string selected_path = path;
-
-    // Update the path with array elements if necessary.
-    // Check if any of the path definitions are an array type.
-    bool has_array = false;
-    for(auto definition = definitions.cbegin(); definition != definitions.cend(); ++ definition)
+    // Check if the selected field has array path parts.
+    if(candidate_field->has_arrays())
     {
-        if(definition->is_array())
-        {
-            has_array = true;
-            break;
-        }
-    }
-    if(has_array)
-    {
-        // Show form array to get the path.
-        form_array dialog(definitions, this);
+        // Show form_array to get array indices.
+        form_array dialog(candidate_field, this);
         if(!dialog.exec())
         {
             return;
         }
-        selected_path = dialog.selected_path();
     }
 
-    form_main::setWindowTitle(QString::fromStdString(selected_path));
+    form_main::setWindowTitle(QString::fromStdString(candidate_field->full_path()));
 }
 void form_main::toolbar_table_remove()
 {
@@ -288,12 +269,10 @@ void form_main::bag_loaded()
 
 void form_main::on_combobox_topics_currentTextChanged(const QString& text)
 {
-    // Update candidate topic/definition tree.
-    form_main::m_candidate_topic_name = text.toStdString();
-    bool topic_exists = form_main::m_data_interface.get_topic_definition(form_main::m_candidate_topic_name, form_main::m_candidate_topic_definition_tree);
+    // Get a new candidate topic from the data interface.
+    form_main::m_candidate_topic = form_main::m_data_interface.get_candidate_topic(text.toStdString());
 
     // Update the message tree view.
-    // Clear if topic does not exist.
-    form_main::update_tree_message(!topic_exists);
+    form_main::update_tree_message();
 }
 

@@ -7,9 +7,10 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class form_main; }
 QT_END_NAMESPACE
 
-#include "data_interface.h"
+#include "data/data_interface.h"
 
 #include <QTimer>
+#include <QTreeWidgetItem>
 
 #include <ros/ros.h>
 
@@ -45,7 +46,7 @@ private:
     void setup_toolbar_table();
 
     void update_combobox_topics();
-    void update_tree_message(bool clear = false);
+    void update_tree_message();
     void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item);
 
     // ROS
@@ -57,10 +58,10 @@ private:
     void ros_spin();
 
     // COMPONENTS
-    data_interface m_data_interface;
+    data::data_interface m_data_interface;
 
-    std::string m_candidate_topic_name;
-    message_introspection::definition_tree_t m_candidate_topic_definition_tree;
+    // CANDIDATES
+    std::shared_ptr<data::candidate_topic_t> m_candidate_topic;
 
 
 };
