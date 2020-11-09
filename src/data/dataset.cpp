@@ -28,6 +28,7 @@ void dataset::load(const rosbag::Bag& bag)
     rosbag::View view(bag, rosbag::TopicQuery(dataset::m_topic_name));
 
     // Populate the raw data.
+    dataset::m_data_time.clear();
     dataset::m_data_raw.clear();
     for(auto instance = view.begin(); instance != view.end(); ++instance)
     {
@@ -38,6 +39,7 @@ void dataset::load(const rosbag::Bag& bag)
         if(introspector.get_number(dataset::m_field_path, value))
         {
             // Add it to the raw data buffer.
+            dataset::m_data_time.push_back(instance->getTime().toSec());
             dataset::m_data_raw.push_back(value);
         }
     }
