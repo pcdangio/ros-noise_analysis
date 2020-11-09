@@ -38,7 +38,7 @@ public:
 
 signals:
     void bag_loaded();
-    void datasets_updated();
+    void dataset_added();
 
 private:
     rosbag::Bag m_bag;

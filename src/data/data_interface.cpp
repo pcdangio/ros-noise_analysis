@@ -96,7 +96,7 @@ void data_interface::add_dataset(const std::shared_ptr<candidate_field_t>& candi
     for(auto dataset = data_interface::m_datasets.cbegin(); dataset != data_interface::m_datasets.cend(); ++dataset)
     {
         // Check if dataset exists.
-        if((*dataset)->topic_name().compare(candidate_field->topic_name()) == 0 && (*dataset)->field_path().compare(candidate_field->full_path()))
+        if((*dataset)->topic_name().compare(candidate_field->topic_name()) == 0 && (*dataset)->field_path().compare(candidate_field->full_path()) == 0)
         {
             // Dataset already exists.
             return;
@@ -122,11 +122,11 @@ void data_interface::add_dataset(const std::shared_ptr<candidate_field_t>& candi
     // Add the dataset to the end of the deque.
     data_interface::m_datasets.push_back(dataset);
 
-    // Emit signal.
-    emit data_interface::datasets_updated();
-
     // Load the dataset.
     dataset->load(data_interface::m_bag);
+
+    // Emit signal.
+    emit data_interface::dataset_added();
 }
 
 uint32_t data_interface::n_datasets() const
