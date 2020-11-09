@@ -50,21 +50,29 @@ bool dataset::calculate()
 }
 
 // DATA ACCESS
+void dataset::lock_data()
+{
+    dataset::m_mutex.lock();
+}
+void dataset::unlock_data()
+{
+    dataset::m_mutex.unlock();
+}
 const std::vector<double>& dataset::data_time() const
 {
-
+    return dataset::m_data_time;
 }
 const std::vector<double>& dataset::data_raw() const
 {
-
+    return dataset::m_data_raw;
 }
 const std::vector<double>& dataset::data_fit() const
 {
-
+    return dataset::m_data_fit;
 }
 const std::vector<double>& dataset::data_noise() const
 {
-
+    return dataset::m_data_noise;
 }
 
 // PROPERTIES
@@ -81,9 +89,13 @@ std::string dataset::field_path() const
     return dataset::m_field_path;
 }
 
-double dataset::variance() const
+double dataset::variance()
 {
-    return dataset::m_variance;
+    dataset::m_mutex.lock();
+    double output = dataset::m_variance;
+    dataset::m_mutex.unlock();
+
+    return output;
 }
 
 uint32_t dataset::fit_bases() const
