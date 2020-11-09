@@ -1,7 +1,8 @@
 #include "gui/form_main.h"
 #include "ui_form_main.h"
 
-#include "gui/form_field.h"
+#include "gui/form_array.h"
+#include "data/candidate_field.h"
 
 #include <QFileDialog>
 #include <QToolBar>
@@ -13,17 +14,16 @@ form_main::form_main(QWidget *parent)
 {
     // Set up UI.
     form_main::ui->setupUi(this);
-    // Add toolbars.
+    // Set up UI elements.
+    form_main::setup_splitter();
+    form_main::setup_tree_message();
     form_main::setup_toolbar_table();
-
-    // Set up data_set.
-    form_main::m_data_set = std::make_shared<data_set>();
 
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
 
-    // Connect form to data_set events.
-    connect(form_main::m_data_set.get(), &data_set::bag_loaded, this, &form_main::bag_loaded);
+    // Connect form to data_interface events.
+    connect(&(form_main::m_data_interface), &data::data_interface::bag_loaded, this, &form_main::bag_loaded);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -36,6 +36,27 @@ form_main::~form_main()
 }
 
 // UI
+void form_main::setup_splitter()
+{
+    // Set data splitter to stretch equally.
+    form_main::ui->splitter_fields->setStretchFactor(0,1);
+    form_main::ui->splitter_fields->setStretchFactor(1,1);
+
+    // Set main splitter to stretch equally.
+    form_main::ui->splitter_main->setStretchFactor(0,1);
+    form_main::ui->splitter_main->setStretchFactor(1,1);
+}
+void form_main::setup_tree_message()
+{
+    // Set up treeview.
+    form_main::ui->tree_message->setHeaderLabels({"Name", "Type"});
+    form_main::ui->tree_message->header()->setDefaultAlignment(Qt::AlignHCenter);
+    form_main::ui->tree_message->header()->setSectionResizeMode(0, QHeaderView::ResizeMode::Stretch);
+    form_main::ui->tree_message->header()->setSectionResizeMode(1, QHeaderView::ResizeMode::Interactive);
+
+    // Initialize combobox.
+    form_main::ui->combobox_topics->addItem("Select topic...");
+}
 void form_main::setup_toolbar_table()
 {
     // Create new toolbar for table.
@@ -58,7 +79,7 @@ void form_main::setup_toolbar_table()
     auto action_open = toolbar_table->addAction(QIcon::fromTheme("document-open"), "Open analysis...");
 
     // Add toolbar to table's layout.
-    form_main::ui->layout_table->insertWidget(0, toolbar_table);
+    form_main::ui->layout_fields->insertWidget(0, toolbar_table);
 
     // Make connections.
     connect(action_add, &QAction::triggered, this, &form_main::toolbar_table_add);
@@ -71,12 +92,107 @@ void form_main::setup_toolbar_table()
     connect(action_open, &QAction::triggered, this, &form_main::toolbar_table_open);
 }
 
+void form_main::update_combobox_topics()
+{
+    // Clear existing topics.
+    form_main::ui->combobox_topics->clear();
+
+    // Add new topics.
+    form_main::ui->combobox_topics->addItem("Select topic...");
+    auto topics = form_main::m_data_interface.bag_topics();
+    for(auto topic = topics.cbegin(); topic != topics.cend(); ++topic)
+    {
+        form_main::ui->combobox_topics->addItem(QString::fromStdString(*topic));
+    }
+}
+void form_main::update_tree_message()
+{
+    // Clear the current tree contents.
+    form_main::ui->tree_message->clear();
+
+    // Check if candidate topic is empty.
+    if(!form_main::m_candidate_topic)
+    {
+        return;
+    }
+
+    // Create root tree item.
+    QTreeWidgetItem* root_item = new QTreeWidgetItem();
+
+    // Recursively add tree items.
+    form_main::add_tree_item(form_main::m_candidate_topic->definition_tree, root_item);
+
+    // Update root item's empty name to topic name.
+    root_item->setText(0, QString::fromStdString(form_main::m_candidate_topic->topic_name));
+
+    // Add root item to tree widget.
+    form_main::ui->tree_message->addTopLevelItem(root_item);
+
+    // Resize type column.
+    form_main::ui->tree_message->resizeColumnToContents(1);
+
+    // Expand all items.
+    form_main::ui->tree_message->expandAll();
+}
+void form_main::add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item)
+{
+    // Set the item's data.
+    item->setText(0, QString::fromStdString(definition_tree.definition.name() + definition_tree.definition.array()));
+    item->setText(1, QString::fromStdString(definition_tree.definition.type()));
+
+    // Store the field's path in the user data.
+    item->setData(0, Qt::ItemDataRole::UserRole, QString::fromStdString(definition_tree.definition.path()));
+
+    // Add children.
+    for(auto field = definition_tree.fields.cbegin(); field != definition_tree.fields.cend(); ++field)
+    {
+        // Create new child item.
+        QTreeWidgetItem* child = new QTreeWidgetItem();
+        // Recurse into child item.
+        form_main::add_tree_item(*field, child);
+        // Add child to item.
+        item->addChild(child);
+    }
+}
+
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()
 {
-    // Show form for adding field.
-    form_field dialog(form_main::m_data_set);
-    dialog.exec();
+    // Get the currently selected item from tree_message.
+    auto selected_items = form_main::ui->tree_message->selectedItems();
+    if(selected_items.empty())
+    {
+        // Warn that no item is selected to add.
+        QMessageBox::warning(this, "Error", "You must select a message topic/field to add.");
+        return;
+    }
+
+    // Get the selected item's path.
+    std::string path = selected_items.front()->data(0, Qt::ItemDataRole::UserRole).toString().toStdString();
+
+    // Create a new candidate field.
+    auto candidate_field = std::make_shared<data::candidate_field_t>(form_main::m_candidate_topic, path);
+
+    // Check if the selected field is primitive.
+    if(!candidate_field->is_primitive())
+    {
+        // Warn that the selected path is not a primitive type.
+        QMessageBox::warning(this, "Error", "You may only add fields that are a primitive ROS message type.");
+        return;
+    }
+
+    // Check if the selected field has array path parts.
+    if(candidate_field->has_arrays())
+    {
+        // Show form_array to get array indices.
+        form_array dialog(candidate_field, this);
+        if(!dialog.exec())
+        {
+            return;
+        }
+    }
+
+    form_main::setWindowTitle(QString::fromStdString(candidate_field->full_path()));
 }
 void form_main::toolbar_table_remove()
 {
@@ -136,7 +252,7 @@ void form_main::on_button_open_bag_clicked()
     }
 
     // Try to load bag file.
-    if(!form_main::m_data_set->load_bag(dialog.selectedFiles().front().toStdString()))
+    if(!form_main::m_data_interface.load_bag(dialog.selectedFiles().front().toStdString()))
     {
         QMessageBox::warning(this, "Error", "Error loading bag file. See ROS log for more information.");
     }
@@ -145,5 +261,18 @@ void form_main::on_button_open_bag_clicked()
 void form_main::bag_loaded()
 {
     // Update bag name line edit.
-    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_set->bag_name()));
+    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_interface.bag_name()));
+
+    // Update topics combobox.
+    form_main::update_combobox_topics();
 }
+
+void form_main::on_combobox_topics_currentTextChanged(const QString& text)
+{
+    // Get a new candidate topic from the data interface.
+    form_main::m_candidate_topic = form_main::m_data_interface.get_candidate_topic(text.toStdString());
+
+    // Update the message tree view.
+    form_main::update_tree_message();
+}
+

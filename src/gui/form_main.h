@@ -7,9 +7,10 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class form_main; }
 QT_END_NAMESPACE
 
-#include "data_set.h"
+#include "data/data_interface.h"
 
 #include <QTimer>
+#include <QTreeWidgetItem>
 
 #include <ros/ros.h>
 
@@ -35,9 +36,18 @@ private slots:
 
     void bag_loaded();
 
+    void on_combobox_topics_currentTextChanged(const QString& text);
+
 private:
     Ui::form_main *ui;
+
+    void setup_splitter();
+    void setup_tree_message();
     void setup_toolbar_table();
+
+    void update_combobox_topics();
+    void update_tree_message();
+    void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item);
 
     // ROS
     /// \brief Stores the node's handle.
@@ -48,6 +58,11 @@ private:
     void ros_spin();
 
     // COMPONENTS
-    std::shared_ptr<data_set> m_data_set;
+    data::data_interface m_data_interface;
+
+    // CANDIDATES
+    std::shared_ptr<data::candidate_topic_t> m_candidate_topic;
+
+
 };
 #endif // FORM_MAIN_H
