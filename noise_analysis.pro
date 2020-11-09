@@ -16,6 +16,7 @@ HEADERS += \
     src/data/candidate_topic.h \
     src/data/dataset.h \
     src/data/data_interface.h \
+    src/graph/chart.h \
     src/gui/form_array.h \
     src/gui/form_main.h
 
@@ -23,6 +24,7 @@ SOURCES += \
     src/data/candidate_field.cpp \
     src/data/dataset.cpp \
     src/data/data_interface.cpp \
+    src/graph/chart.cpp \
     src/gui/form_array.cpp \
     src/gui/form_main.cpp \
     src/main.cpp

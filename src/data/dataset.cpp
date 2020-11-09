@@ -70,10 +70,6 @@ const std::vector<double>& dataset::data_fit() const
 {
     return dataset::m_data_fit;
 }
-const std::vector<double>& dataset::data_noise() const
-{
-    return dataset::m_data_noise;
-}
 
 // PROPERTIES
 std::string dataset::name() const

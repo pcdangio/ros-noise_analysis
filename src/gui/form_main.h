@@ -8,6 +8,7 @@ namespace Ui { class form_main; }
 QT_END_NAMESPACE
 
 #include "data/data_interface.h"
+#include "graph/chart.h"
 
 #include <QTimer>
 #include <QTreeWidgetItem>
@@ -39,6 +40,8 @@ private slots:
 
     void on_combobox_topics_currentTextChanged(const QString& text);
 
+    void on_table_datasets_itemSelectionChanged();
+
 private:
     Ui::form_main *ui;
 
@@ -46,6 +49,7 @@ private:
     void setup_tree_message();
     void setup_toolbar_table();
     void setup_table_datasets();
+    void setup_chartview();
 
     void update_combobox_topics();
     void update_tree_message();
@@ -62,6 +66,7 @@ private:
 
     // COMPONENTS
     data::data_interface m_data_interface;
+    graph::chart m_chart;
 
     // CANDIDATES
     std::shared_ptr<data::candidate_topic_t> m_candidate_topic;

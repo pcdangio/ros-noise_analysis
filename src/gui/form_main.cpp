@@ -19,6 +19,7 @@ form_main::form_main(QWidget *parent)
     form_main::setup_tree_message();
     form_main::setup_toolbar_table();
     form_main::setup_table_datasets();
+    form_main::setup_chartview();
 
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
@@ -107,6 +108,13 @@ void form_main::setup_table_datasets()
 
     // Hide vertical header.
     form_main::ui->table_datasets->verticalHeader()->setVisible(false);
+}
+void form_main::setup_chartview()
+{
+    // Delete old chart and add new chart.
+    auto chart_old = form_main::ui->chartview->chart();
+    form_main::ui->chartview->setChart(form_main::m_chart.get_chart());
+    delete chart_old;
 }
 
 void form_main::update_combobox_topics()
@@ -338,3 +346,22 @@ void form_main::on_combobox_topics_currentTextChanged(const QString& text)
     form_main::update_tree_message();
 }
 
+
+void form_main::on_table_datasets_itemSelectionChanged()
+{
+    // Get current selected range.
+    auto selected_range = form_main::ui->table_datasets->selectedRanges();
+
+    // Check if the selection is empty.
+    if(selected_range.empty())
+    {
+        form_main::m_chart.clear();
+        return;
+    }
+
+    // Determine what the selected row index is.
+    uint32_t row_index = selected_range.front().topRow();
+
+    // Plot the associated dataset from the data interface.
+    form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(row_index));
+}

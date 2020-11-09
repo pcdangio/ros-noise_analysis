@@ -25,7 +25,6 @@ public:
     const std::vector<double>& data_time() const;
     const std::vector<double>& data_raw() const;
     const std::vector<double>& data_fit() const;
-    const std::vector<double>& data_noise() const;
 
     // PROPERTIES
     std::string name() const;
@@ -45,7 +44,6 @@ private:
     std::vector<double> m_data_time;
     std::vector<double> m_data_raw;
     std::vector<double> m_data_fit;
-    std::vector<double> m_data_noise;
 
     uint32_t m_fit_bases;
     double m_fit_smoothing;
