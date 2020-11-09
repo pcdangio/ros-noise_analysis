@@ -1,5 +1,9 @@
 #include "data/dataset.h"
 
+#include <message_introspection/introspector.h>
+
+#include <rosbag/view.h>
+
 using namespace data;
 
 dataset::dataset(const std::string& name, const std::string& topic_name, const std::string& field_path)
@@ -15,7 +19,28 @@ dataset::dataset(const std::string& name, const std::string& topic_name, const s
 
 void dataset::load(const rosbag::Bag& bag)
 {
+    // Load the raw data from the bag.
 
+    // Create an introspector for reading the data.
+    message_introspection::introspector introspector;
+
+    // Use a view to get the topic data.
+    rosbag::View view(bag, rosbag::TopicQuery(dataset::m_topic_name));
+
+    // Populate the raw data.
+    dataset::m_data_raw.clear();
+    for(auto instance = view.begin(); instance != view.end(); ++instance)
+    {
+        // Use introspector to read the message.
+        introspector.new_message(*instance);
+        // Get the field as a double.
+        double value;
+        if(introspector.get_number(dataset::m_field_path, value))
+        {
+            // Add it to the raw data buffer.
+            dataset::m_data_raw.push_back(value);
+        }
+    }
 }
 bool dataset::calculate()
 {
