@@ -30,6 +30,12 @@ bool data_interface::load_bag(std::string bag_path)
     // Emit bag loaded.
     emit data_interface::bag_loaded();
 
+    // Clear any existing datasets.
+    data_interface::m_datasets.clear();
+
+    // Emit datasets modified.
+    emit data_interface::datasets_modified();
+
     return true;
 }
 std::string data_interface::bag_name() const

@@ -27,6 +27,7 @@ form_main::form_main(QWidget *parent)
     // Connect form to data_interface events.
     connect(&(form_main::m_data_interface), &data::data_interface::bag_loaded, this, &form_main::bag_loaded);
     connect(&(form_main::m_data_interface), &data::data_interface::dataset_added, this, &form_main::dataset_added);
+    connect(&(form_main::m_data_interface), &data::data_interface::datasets_modified, this, &form_main::datasets_modified);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -335,6 +336,11 @@ void form_main::dataset_added()
 
     // Select the last dataset in the list, which was the added.
     form_main::ui->table_datasets->selectRow(form_main::ui->table_datasets->rowCount() - 1);
+}
+void form_main::datasets_modified()
+{
+    // Update datasets table.
+    form_main::update_table_datasets();
 }
 
 void form_main::on_combobox_topics_currentTextChanged(const QString& text)

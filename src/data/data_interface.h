@@ -30,20 +30,24 @@ public:
 
     std::shared_ptr<candidate_topic_t> get_candidate_topic(const std::string& topic_name) const;
 
-    void add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field);
+
 
     uint32_t n_datasets() const;
-    std::shared_ptr<dataset> get_dataset(uint32_t index) const;
+    void add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field);
+    void select_dataset(uint32_t index);
+    std::shared_ptr<dataset> selected_dataset() const;
 
 
 signals:
     void bag_loaded();
     void dataset_added();
+    void dataset_calculated();
 
 private:
     rosbag::Bag m_bag;
 
     std::deque<std::shared_ptr<dataset>> m_datasets;
+    std::shared_ptr<dataset> m_selected_dataset;
 };
 
 }

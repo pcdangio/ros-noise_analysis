@@ -37,6 +37,7 @@ private slots:
 
     void bag_loaded();
     void dataset_added();
+    void datasets_modified();
 
     void on_combobox_topics_currentTextChanged(const QString& text);
 

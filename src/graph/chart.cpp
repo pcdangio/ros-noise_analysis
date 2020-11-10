@@ -21,15 +21,19 @@ chart::chart()
     // RAW
     chart::m_series_raw = new QtCharts::QLineSeries();
     chart::m_series_raw->setName("raw");
+    chart::m_chart->addSeries(chart::m_series_raw);
     chart::m_series_raw->attachAxis(chart::m_axis_x);
     chart::m_series_raw->attachAxis(chart::m_axis_y);
-    chart::m_chart->addSeries(chart::m_series_raw);
+
     // FIT
     chart::m_series_fit = new QtCharts::QLineSeries();
     chart::m_series_fit->setName("fit");
+    chart::m_chart->addSeries(chart::m_series_fit);
     chart::m_series_fit->attachAxis(chart::m_axis_x);
     chart::m_series_fit->attachAxis(chart::m_axis_y);
-    chart::m_chart->addSeries(chart::m_series_fit);
+
+    // Configure Legend
+    chart::m_chart->legend()->setAlignment(Qt::AlignmentFlag::AlignRight);
 }
 
 QtCharts::QChart* chart::get_chart() const
@@ -49,7 +53,7 @@ void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
     points.reserve(time.size());
 
     // RAW
-    for(uint32_t i = 0; i < time.size(); ++i)
+    for(uint32_t i = 0; i < raw.size(); ++i)
     {
         points.push_back(QPointF(time.at(i), raw.at(i)));
     }
@@ -57,14 +61,41 @@ void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
 
     // FIT
     points.clear();
-    for(uint32_t i = 0; i < time.size(); ++i)
+    for(uint32_t i = 0; i < fit.size(); ++i)
     {
         points.push_back(QPointF(time.at(i), fit.at(i)));
     }
     chart::m_series_fit->replace(points);
+
+    // Reset zoom.
+    chart::zoom_reset();
 }
 void chart::clear()
 {
     chart::m_series_raw->clear();
     chart::m_series_fit->clear();
+}
+
+void chart::zoom_reset()
+{
+    // Get the time limits.
+    double x_min = chart::m_series_raw->points().first().x();
+    double x_max = chart::m_series_raw->points().last().x();
+    chart::m_axis_x->setRange(x_min, x_max);
+
+    // Get the min/max part of the raw signal.
+    auto raw_points = chart::m_series_raw->points();
+    double y_min = std::numeric_limits<double>::infinity();
+    double y_max = -std::numeric_limits<double>::infinity();
+    for(auto point = raw_points.cbegin(); point != raw_points.cend(); ++point)
+    {
+        y_min = std::min(y_min, point->y());
+        y_max = std::max(y_max, point->y());
+    }
+
+    // Calculate buffer.
+    double buffer = 0.2 * (y_max - y_min);
+
+    // Set y range.
+    chart::m_axis_y->setRange(y_min - buffer, y_max + buffer);
 }

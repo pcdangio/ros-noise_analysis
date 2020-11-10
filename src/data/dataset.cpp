@@ -21,6 +21,10 @@ void dataset::load(const rosbag::Bag& bag)
 {
     // Load the raw data from the bag.
 
+    // Clear existing data.
+    dataset::m_data_time.clear();
+    dataset::m_data_raw.clear();
+
     // Create an introspector for reading the data.
     message_introspection::introspector introspector;
 
@@ -28,8 +32,6 @@ void dataset::load(const rosbag::Bag& bag)
     rosbag::View view(bag, rosbag::TopicQuery(dataset::m_topic_name));
 
     // Populate the raw data.
-    dataset::m_data_time.clear();
-    dataset::m_data_raw.clear();
     for(auto instance = view.begin(); instance != view.end(); ++instance)
     {
         // Use introspector to read the message.
@@ -42,6 +44,13 @@ void dataset::load(const rosbag::Bag& bag)
             dataset::m_data_time.push_back(instance->getTime().toSec());
             dataset::m_data_raw.push_back(value);
         }
+    }
+
+    // Remove time offset.
+    // Reverse through time vector.
+    for(auto time = dataset::m_data_time.rbegin(); time != dataset::m_data_time.rend(); ++time)
+    {
+        *time -= dataset::m_data_time.front();
     }
 }
 bool dataset::calculate()

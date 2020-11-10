@@ -19,6 +19,8 @@ public:
     void plot_dataset(const std::shared_ptr<data::dataset>& dataset);
     void clear();
 
+    void zoom_reset();
+
 private:
     QtCharts::QChart* m_chart;
     QtCharts::QValueAxis* m_axis_x;
