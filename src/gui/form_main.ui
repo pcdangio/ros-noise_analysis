@@ -147,12 +147,18 @@
              <item row="0" column="0">
               <widget class="QLabel" name="label_bases">
                <property name="text">
-                <string>Bases:</string>
+                <string>Complexity:</string>
                </property>
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QSlider" name="slider_bases">
+              <widget class="QSlider" name="slider_basis_ratio">
+               <property name="maximum">
+                <number>100</number>
+               </property>
+               <property name="value">
+                <number>50</number>
+               </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -167,6 +173,12 @@
              </item>
              <item row="1" column="1">
               <widget class="QSlider" name="slider_smoothness">
+               <property name="minimum">
+                <number>-50</number>
+               </property>
+               <property name="maximum">
+                <number>50</number>
+               </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>

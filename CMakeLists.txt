@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(ALGLIB REQUIRED)
 
 # Set up Qt
 set(CMAKE_AUTOMOC ON)
@@ -166,6 +166,7 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   Qt5::Widgets
   Qt5::Charts
+  ${ALGLIB_LIB}
 )
 
 #############

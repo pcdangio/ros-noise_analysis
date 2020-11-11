@@ -55,6 +55,7 @@ private:
     void update_tree_message();
     void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item);
     void update_table_datasets();
+    void update_plot_view(std::shared_ptr<data::dataset> dataset);
 
     bool get_selected_dataset(uint32_t& index);
 

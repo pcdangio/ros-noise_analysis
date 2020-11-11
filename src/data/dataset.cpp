@@ -4,6 +4,8 @@
 
 #include <rosbag/view.h>
 
+#include <libalglib/interpolation.h>
+
 using namespace data;
 
 dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier)
@@ -22,6 +24,8 @@ dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& nam
 
     // Initialize members.
     dataset::m_variance = std::numeric_limits<double>::quiet_NaN();
+    dataset::m_fit_basis_ratio = 0.5;
+    dataset::m_fit_smoothing = 1.0;
     dataset::m_thread_running = false;
     dataset::m_thread_stop = false;
 }
@@ -114,15 +118,15 @@ double dataset::variance() const
     return dataset::m_variance;
 }
 
-uint32_t dataset::fit_bases() const
+double dataset::fit_basis_ratio() const
 {
     std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
-    return dataset::m_fit_bases;
+    return dataset::m_fit_basis_ratio;
 }
-void dataset::fit_bases(uint32_t value)
+void dataset::fit_basis_ratio(double value)
 {
     // Do not use mutex here to allow adjusting parameter while calculation thread running.
-    dataset::m_fit_bases = value;
+    dataset::m_fit_basis_ratio = value;
 }
 double dataset::fit_smoothing() const
 {
@@ -185,11 +189,53 @@ void dataset::load_worker()
 }
 void dataset::calculate_worker()
 {
-    // Lock dataset mutex.
-    dataset::m_mutex.lock();
+    // Use alglib to create spline fit for data.
 
-    // Unlock dataset mutex.
-    dataset::m_mutex.unlock();
+    // Set up X and Y arrays.
+    alglib::real_1d_array x, y;
+
+    // Store content from internal vectors to avoid copies.
+    x.setcontent(dataset::m_data_time->size(), dataset::m_data_time->data());
+    y.setcontent(dataset::m_data_raw->size(), dataset::m_data_raw->data());
+
+    // Set up spline interpolant and fit report structures to capture output.
+    alglib::spline1dinterpolant interpolant;
+    alglib::spline1dfitreport fit_report;
+    alglib::ae_int_t result;
+
+    // Perform fitting.
+    alglib::spline1dfitpenalized(x, y, x.length(), dataset::m_fit_basis_ratio * x.length(), dataset::m_fit_smoothing, result, interpolant, fit_report);
+
+    // Check result.
+    if(result > 0)
+    {
+        // Populate fit vector using interpolant.
+        std::shared_ptr<std::vector<double>> data_fit = std::make_shared<std::vector<double>>();
+        data_fit->reserve(dataset::m_data_time->size());
+        for(auto time = dataset::m_data_time->cbegin(); time != dataset::m_data_time->cend(); ++time)
+        {
+            data_fit->push_back(alglib::spline1dcalc(interpolant, *time));
+        }
+
+        // Calculate variance.
+        // Assume noise is zero mean.
+        double variance = 0;
+        for(uint32_t i = 0; i < dataset::m_data_time->size(); ++i)
+        {
+            variance += std::pow(data_fit->at(i) - dataset::m_data_raw->at(i), 2.0);
+        }
+        variance /= static_cast<double>(dataset::m_data_time->size());
+
+        // Store fit vector and variance in member variables with thread protection.
+        dataset::m_mutex.lock();
+        dataset::m_data_fit = data_fit;
+        dataset::m_variance = variance;
+        dataset::m_mutex.unlock();
+    }
+    else
+    {
+        ROS_ERROR_STREAM("alglib failed to generate spline fit (" << result << ")");
+    }
 
     // Raise notifier and pass memory address of this instance.
     dataset::m_notifier(reinterpret_cast<uint64_t>(this));

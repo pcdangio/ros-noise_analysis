@@ -220,6 +220,32 @@ void form_main::update_table_datasets()
         form_main::ui->table_datasets->setItem(i, 2, item_path);
     }
 }
+void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
+{
+    // Check if there is a dataset to plot.
+    if(dataset)
+    {
+        // Update the plot view.
+
+        // Update the chart.
+        form_main::m_chart.plot_dataset(dataset);
+
+        // Update the sliders.
+        form_main::ui->slider_basis_ratio->setValue(dataset->fit_basis_ratio() * 100.0);
+        form_main::ui->slider_smoothness->setValue(dataset->fit_smoothing() * 10.0);
+    }
+    else
+    {
+        // Clear the plot view.
+
+        // Clear the chart.
+        form_main::m_chart.clear();
+
+        // Reset the sliders.
+        form_main::ui->slider_basis_ratio->setValue(50);
+        form_main::ui->slider_smoothness->setValue(10);
+    }
+}
 
 bool form_main::get_selected_dataset(uint32_t& index)
 {
@@ -286,8 +312,8 @@ void form_main::toolbar_table_add()
     // Update datasets table.
     form_main::update_table_datasets();
 
-    // Clear the plot.
-    form_main::m_chart.clear();
+    // Clear the plot view.
+    form_main::update_plot_view(nullptr);
 
     // Select the last dataset in the list, which was the added.
     form_main::ui->table_datasets->selectRow(form_main::ui->table_datasets->rowCount() - 1);
@@ -314,8 +340,8 @@ void form_main::toolbar_table_remove()
     // Clear table selection.
     form_main::ui->table_datasets->clearSelection();
 
-    // Clear plot.
-    form_main::m_chart.clear();
+    // Clear plot view.
+    form_main::update_plot_view(nullptr);
 }
 void form_main::toolbar_table_clear()
 {
@@ -325,8 +351,8 @@ void form_main::toolbar_table_clear()
     // Update table.
     form_main::update_table_datasets();
 
-    // Clear plot.
-    form_main::m_chart.clear();
+    // Clear plot view.
+    form_main::update_plot_view(nullptr);;
 }
 void form_main::toolbar_table_up()
 {
@@ -474,13 +500,14 @@ void form_main::dataset_calculated(quint32 index)
     // Check if the calculated index matches the currently selected index.
     if(selected_index == index)
     {
-        // Update the plot for the selected dataset.
-        form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(selected_index));
+        // Update the plot view for selected dataset.
+        form_main::update_plot_view(form_main::m_data_interface.get_dataset(selected_index));
     }
 }
 
 
 void form_main::on_table_datasets_cellClicked(int row, int /*column*/)
 {
-    form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(row));
+    // Update the plot view for selected index.
+    form_main::update_plot_view(form_main::m_data_interface.get_dataset(row));
 }
