@@ -32,6 +32,10 @@ public:
 
 
     bool add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field);
+    bool remove_dataset(uint32_t index);
+    bool move_dataset(uint32_t old_index, uint32_t new_index);
+    void clear_datasets();
+
     uint32_t n_datasets() const;
     std::shared_ptr<dataset> get_dataset(uint32_t index) const;
 

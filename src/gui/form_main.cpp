@@ -221,6 +221,23 @@ void form_main::update_table_datasets()
     }
 }
 
+bool form_main::get_selected_dataset(uint32_t& index)
+{
+    // Get current selected range.
+    auto selected_range = form_main::ui->table_datasets->selectedRanges();
+
+    // Check if the selection is empty.
+    if(selected_range.empty())
+    {
+        return false;
+    }
+
+    // Determine what the selected row index is.
+    index = selected_range.front().topRow();
+
+    return true;
+}
+
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()
 {
@@ -277,19 +294,101 @@ void form_main::toolbar_table_add()
 }
 void form_main::toolbar_table_remove()
 {
+    // Get the selected dataset index to remove.
+    uint32_t selected_index;
+    if(!form_main::get_selected_dataset(selected_index))
+    {
+        QMessageBox::warning(this, "Error", "You must first select a dataset to remove.");
+        return;
+    }
 
+    if(!form_main::m_data_interface.remove_dataset(selected_index))
+    {
+        QMessageBox::warning(this, "Error", "Failed to remove dataset");
+        return;
+    }
+
+    // Update table.
+    form_main::update_table_datasets();
+
+    // Clear table selection.
+    form_main::ui->table_datasets->clearSelection();
+
+    // Clear plot.
+    form_main::m_chart.clear();
 }
 void form_main::toolbar_table_clear()
 {
+    // Remove all datasets.
+    form_main::m_data_interface.clear_datasets();
 
+    // Update table.
+    form_main::update_table_datasets();
+
+    // Clear plot.
+    form_main::m_chart.clear();
 }
 void form_main::toolbar_table_up()
 {
+    // Get the selected dataset index to move.
+    uint32_t selected_index;
+    if(!form_main::get_selected_dataset(selected_index))
+    {
+        QMessageBox::warning(this, "Error", "You must first select a dataset to move.");
+        return;
+    }
 
+    // Check if dataset can be moved up.
+    if(selected_index == 0)
+    {
+        return;
+    }
+
+    // Get new index.
+    uint32_t new_index = selected_index - 1;
+
+    if(!form_main::m_data_interface.move_dataset(selected_index, new_index))
+    {
+        QMessageBox::warning(this, "Error", "Failed to move dataset.");
+        return;
+    }
+
+    // Update table.
+    form_main::update_table_datasets();
+
+    // Select the new index to maintain selection.
+    form_main::ui->table_datasets->selectRow(new_index);
 }
 void form_main::toolbar_table_down()
 {
+    // Get the selected dataset index to move.
+    uint32_t selected_index;
+    if(!form_main::get_selected_dataset(selected_index))
+    {
+        QMessageBox::warning(this, "Error", "You must first select a dataset to move.");
+        return;
+    }
 
+    // Check if dataset can be moved down.
+    if(selected_index == (form_main::m_data_interface.n_datasets() - 1))
+    {
+        return;
+    }
+
+    // Get new index.
+    uint32_t new_index = selected_index + 1;
+
+    if(!form_main::m_data_interface.move_dataset(selected_index, new_index))
+    {
+        QMessageBox::warning(this, "Error", "Failed to move dataset.");
+        return;
+    }
+
+    // Update table.
+    form_main::update_table_datasets();
+
+    // Select the new index to maintain selection.
+    form_main::ui->table_datasets->selectRow(new_index);
 }
 void form_main::toolbar_table_save()
 {
@@ -364,17 +463,13 @@ void form_main::dataset_calculated(quint32 index)
 {
     // If the newly calculated dataset is the one being displayed, update the plot.
 
-    // Get current selected range.
-    auto selected_range = form_main::ui->table_datasets->selectedRanges();
-
-    // Check if the selection is empty.
-    if(selected_range.empty())
+    // Determine what the selected row index is.
+    uint32_t selected_index;
+    if(!form_main::get_selected_dataset(selected_index))
     {
+        // No dataset selected.
         return;
     }
-
-    // Determine what the selected row index is.
-    uint32_t selected_index = selected_range.front().topRow();
 
     // Check if the calculated index matches the currently selected index.
     if(selected_index == index)

@@ -135,6 +135,52 @@ bool data_interface::add_dataset(const std::shared_ptr<candidate_field_t>& candi
 
     return true;
 }
+bool data_interface::remove_dataset(uint32_t index)
+{
+    // Check if specified index exists.
+    if(index >= data_interface::m_datasets.size())
+    {
+        return false;
+    }
+
+    // Cancel any operations the dataset is running.
+    data_interface::m_datasets[index]->cancel();
+
+    // Remove the dataset at the sepcified index.
+    data_interface::m_datasets.erase(data_interface::m_datasets.begin() + index);
+
+    return true;
+}
+bool data_interface::move_dataset(uint32_t old_index, uint32_t new_index)
+{
+    // Validate old and new indices.
+    if(old_index >= data_interface::m_datasets.size() || new_index >= data_interface::m_datasets.size())
+    {
+        return false;
+    }
+
+    // Grab copy of dataset pointer at old index.
+    auto move_dataset = data_interface::m_datasets[old_index];
+
+    // Erase from old index.
+    data_interface::m_datasets.erase(data_interface::m_datasets.begin() + old_index);
+
+    // Insert at new index.
+    data_interface::m_datasets.insert(data_interface::m_datasets.begin() + new_index, move_dataset);
+
+    return true;
+}
+void data_interface::clear_datasets()
+{
+    // Iterate through all datasets to cancel and running operations.
+    for(auto entry = data_interface::m_datasets.begin(); entry != data_interface::m_datasets.end(); ++entry)
+    {
+        (*entry)->cancel();
+    }
+
+    // Clear all datasets.
+    data_interface::m_datasets.clear();
+}
 
 uint32_t data_interface::n_datasets() const
 {

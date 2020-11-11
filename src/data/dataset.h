@@ -21,6 +21,7 @@ public:
     bool load();
     bool calculate();
     bool is_calculating() const;
+    void cancel();
 
     // DATA ACCESS
     void lock_data() const;
@@ -61,6 +62,7 @@ private:
 
     boost::thread m_thread;
     std::atomic<bool> m_thread_running;
+    std::atomic<bool> m_thread_stop;
     mutable std::mutex m_mutex;
     void load_worker();
     void calculate_worker();

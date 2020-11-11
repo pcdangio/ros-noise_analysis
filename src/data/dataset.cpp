@@ -18,13 +18,12 @@ dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& nam
     // Initialize members.
     dataset::m_variance = std::numeric_limits<double>::quiet_NaN();
     dataset::m_thread_running = false;
+    dataset::m_thread_stop = false;
 }
 dataset::~dataset()
 {
-    if(dataset::m_thread_running)
-    {
-        dataset::m_thread.join();
-    }
+    // Halt any running thread.
+    dataset::cancel();
 }
 
 bool dataset::load()
@@ -38,6 +37,7 @@ bool dataset::load()
     // Run the load worker on the thread.
     // NOTE: The load worker will automatically start the calculation worker as well.
     dataset::m_thread_running = true;
+    dataset::m_thread_stop = false;
     dataset::m_thread = boost::thread(&dataset::load_worker, this);
 
     return true;
@@ -52,6 +52,7 @@ bool dataset::calculate()
 
     // Run the calculation worker on the thread.
     dataset::m_thread_running = true;
+    dataset::m_thread_stop = false;
     dataset::m_thread = boost::thread(&dataset::calculate_worker, this);
 
     return true;
@@ -59,6 +60,16 @@ bool dataset::calculate()
 bool dataset::is_calculating() const
 {
     return dataset::m_thread_running;
+}
+void dataset::cancel()
+{
+    if(dataset::m_thread_running)
+    {
+        // Signal stop to thread.
+        dataset::m_thread_stop = true;
+        // Wait for thread to join.
+        dataset::m_thread.join();
+    }
 }
 
 // DATA ACCESS
@@ -142,6 +153,13 @@ void dataset::load_worker()
     // Populate the raw data.
     for(auto instance = view.begin(); instance != view.end(); ++instance)
     {
+        // Check if thread stop requested.
+        if(dataset::m_thread_stop)
+        {
+            dataset::m_mutex.unlock();
+            return;
+        }
+
         // Use introspector to read the message.
         introspector.new_message(*instance);
         // Get the field as a double.
@@ -158,6 +176,13 @@ void dataset::load_worker()
     // Reverse through time vector.
     for(auto time = dataset::m_data_time.rbegin(); time != dataset::m_data_time.rend(); ++time)
     {
+        // Check if thread stop requested.
+        if(dataset::m_thread_stop)
+        {
+            dataset::m_mutex.unlock();
+            return;
+        }
+
         *time -= dataset::m_data_time.front();
     }
 
