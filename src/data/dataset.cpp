@@ -99,7 +99,6 @@ std::string dataset::field_path() const
 
 double dataset::variance() const
 {
-    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
     return dataset::m_variance;
 }
 

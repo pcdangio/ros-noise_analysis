@@ -80,6 +80,7 @@ void chart::clear()
 {
     chart::m_series_raw->clear();
     chart::m_series_fit->clear();
+    zoom_reset();
 }
 
 void chart::zoom_reset()

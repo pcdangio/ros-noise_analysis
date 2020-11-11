@@ -31,7 +31,7 @@ public:
     std::shared_ptr<candidate_topic_t> get_candidate_topic(const std::string& topic_name) const;
 
 
-    std::shared_ptr<dataset> add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field);
+    bool add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field);
     uint32_t n_datasets() const;
     std::shared_ptr<dataset> get_dataset(uint32_t index) const;
 

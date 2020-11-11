@@ -37,9 +37,10 @@ private slots:
 
     void on_combobox_topics_currentTextChanged(const QString& text);
 
-    void on_table_datasets_itemSelectionChanged();
-
     void dataset_calculated(quint32 index);
+
+
+    void on_table_datasets_cellClicked(int row, int column);
 
 private:
     Ui::form_main *ui;
@@ -54,8 +55,6 @@ private:
     void update_tree_message();
     void add_tree_item(const message_introspection::definition_tree_t& definition_tree, QTreeWidgetItem* item);
     void update_table_datasets();
-
-    bool get_selected_dataset(uint32_t& index);
 
     // ROS
     /// \brief Stores the node's handle.

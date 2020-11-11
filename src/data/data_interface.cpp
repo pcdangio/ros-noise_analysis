@@ -89,22 +89,25 @@ std::shared_ptr<candidate_topic_t> data_interface::get_candidate_topic(const std
     return output;
 }
 
-std::shared_ptr<dataset> data_interface::add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field)
+bool data_interface::add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field)
 {    
     // Check if the dataset already exists, and create a set of names.
     // NOTE: Can do this because there won't be a lot of datasets.
     std::unordered_set<std::string> names;
-    for(auto dataset = data_interface::m_datasets.cbegin(); dataset != data_interface::m_datasets.cend(); ++dataset)
+    for(uint32_t i = 0; i < data_interface::m_datasets.size(); ++i)
     {
-        // Check if dataset exists.
-        if((*dataset)->topic_name().compare(candidate_field->topic_name()) == 0 && (*dataset)->field_path().compare(candidate_field->full_path()) == 0)
+        // Get reference to dataset.
+        auto& entry = data_interface::m_datasets[i];
+
+        // Check if candidate dataset already exists.
+        if(entry->topic_name().compare(candidate_field->topic_name()) == 0 && entry->field_path().compare(candidate_field->full_path()) == 0)
         {
-            // Dataset already exists.
-            return *dataset;
+            // Dataset already exists, return false.
+            return false;
         }
 
         // Add dataset's name to unique list.
-        names.insert((*dataset)->name());
+        names.insert(entry->name());
     }
 
     // Find a new name for the dataset.
@@ -127,7 +130,10 @@ std::shared_ptr<dataset> data_interface::add_dataset(const std::shared_ptr<candi
     // Add the dataset to the end of the deque.
     data_interface::m_datasets.push_back(dataset);
 
-    return dataset;
+    // Begin load operation.
+    dataset->load();
+
+    return true;
 }
 
 uint32_t data_interface::n_datasets() const
