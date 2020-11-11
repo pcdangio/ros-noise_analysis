@@ -37,7 +37,9 @@ public:
     double variance() const;
 
     uint32_t fit_bases() const;
+    void fit_bases(uint32_t value);
     double fit_smoothing() const;
+    void fit_smoothing(double value);
 
 private:
     std::string m_name;
