@@ -107,10 +107,20 @@ uint32_t dataset::fit_bases() const
     std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
     return dataset::m_fit_bases;
 }
+void dataset::fit_bases(uint32_t value)
+{
+    // Do not use mutex here to allow adjusting parameter while calculation thread running.
+    dataset::m_fit_bases = value;
+}
 double dataset::fit_smoothing() const
 {
     std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
     return dataset::m_fit_smoothing;
+}
+void dataset::fit_smoothing(double value)
+{
+    // Do not use mutex here to allow adjusting parameter while calculation thread running.
+    dataset::m_fit_smoothing = value;
 }
 
 // THREADING
@@ -160,6 +170,11 @@ void dataset::load_worker(std::shared_ptr<rosbag::Bag> bag)
 }
 void dataset::calculate_worker()
 {
+    // Lock dataset mutex.
+    dataset::m_mutex.lock();
+
+    // Unlock dataset mutex.
+    dataset::m_mutex.unlock();
 
     // Raise notifier and pass memory address of this instance.
     dataset::m_notifier(reinterpret_cast<uint64_t>(this));
