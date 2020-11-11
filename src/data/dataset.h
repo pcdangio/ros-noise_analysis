@@ -24,11 +24,9 @@ public:
     void cancel();
 
     // DATA ACCESS
-    void lock_data() const;
-    void unlock_data() const;
-    const std::vector<double>& data_time() const;
-    const std::vector<double>& data_raw() const;
-    const std::vector<double>& data_fit() const;
+    std::shared_ptr<const std::vector<double>> data_time() const;
+    std::shared_ptr<const std::vector<double>> data_raw() const;
+    std::shared_ptr<const std::vector<double>> data_fit() const;
 
     // PROPERTIES
     std::string name() const;
@@ -51,9 +49,9 @@ private:
 
     std::function<void(uint64_t)> m_notifier;
 
-    std::vector<double> m_data_time;
-    std::vector<double> m_data_raw;
-    std::vector<double> m_data_fit;
+    std::shared_ptr<std::vector<double>> m_data_time;
+    std::shared_ptr<std::vector<double>> m_data_raw;
+    std::shared_ptr<std::vector<double>> m_data_fit;
 
     uint32_t m_fit_bases;
     double m_fit_smoothing;

@@ -15,6 +15,11 @@ dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& nam
     dataset::m_field_path = field_path;
     dataset::m_notifier = notifier;
 
+    // Initialize empty data vectors.
+    dataset::m_data_time = std::make_shared<std::vector<double>>();
+    dataset::m_data_raw = std::make_shared<std::vector<double>>();
+    dataset::m_data_fit = std::make_shared<std::vector<double>>();
+
     // Initialize members.
     dataset::m_variance = std::numeric_limits<double>::quiet_NaN();
     dataset::m_thread_running = false;
@@ -73,25 +78,20 @@ void dataset::cancel()
 }
 
 // DATA ACCESS
-void dataset::lock_data() const
+std::shared_ptr<const std::vector<double>> dataset::data_time() const
 {
-    dataset::m_mutex.lock();
+    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
+    return std::const_pointer_cast<const std::vector<double>>(dataset::m_data_time);
 }
-void dataset::unlock_data() const
+std::shared_ptr<const std::vector<double>> dataset::data_raw() const
 {
-    dataset::m_mutex.unlock();
+    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
+    return std::const_pointer_cast<const std::vector<double>>(dataset::m_data_raw);
 }
-const std::vector<double>& dataset::data_time() const
+std::shared_ptr<const std::vector<double>> dataset::data_fit() const
 {
-    return dataset::m_data_time;
-}
-const std::vector<double>& dataset::data_raw() const
-{
-    return dataset::m_data_raw;
-}
-const std::vector<double>& dataset::data_fit() const
-{
-    return dataset::m_data_fit;
+    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
+    return std::const_pointer_cast<const std::vector<double>>(dataset::m_data_fit);
 }
 
 // PROPERTIES
@@ -110,6 +110,7 @@ std::string dataset::field_path() const
 
 double dataset::variance() const
 {
+    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
     return dataset::m_variance;
 }
 
@@ -137,18 +138,19 @@ void dataset::fit_smoothing(double value)
 // THREADING
 void dataset::load_worker()
 {
-    // Lock the dataset mutex.
-    dataset::m_mutex.lock();
-
-    // Clear existing data.
-    dataset::m_data_time.clear();
-    dataset::m_data_raw.clear();
-
     // Create an introspector for reading the data.
     message_introspection::introspector introspector;
 
     // Use a view to get the topic data.
     rosbag::View view(*dataset::m_bag, rosbag::TopicQuery(dataset::m_topic_name));
+
+    // Create new vector shared pointers for storing loaded data in.
+    auto data_time = std::make_shared<std::vector<double>>();
+    auto data_raw = std::make_shared<std::vector<double>>();
+
+    // Reserve space in vectors.
+    data_time->reserve(view.size());
+    data_raw->reserve(view.size());
 
     // Populate the raw data.
     for(auto instance = view.begin(); instance != view.end(); ++instance)
@@ -156,8 +158,7 @@ void dataset::load_worker()
         // Check if thread stop requested.
         if(dataset::m_thread_stop)
         {
-            dataset::m_mutex.unlock();
-            return;
+            break;
         }
 
         // Use introspector to read the message.
@@ -167,26 +168,15 @@ void dataset::load_worker()
         if(introspector.get_number(dataset::m_field_path, value))
         {
             // Add it to the raw data buffer.
-            dataset::m_data_time.push_back(instance->getTime().toSec());
-            dataset::m_data_raw.push_back(value);
+            data_time->push_back(instance->getTime().toSec());
+            data_raw->push_back(value);
         }
     }
 
-    // Remove time offset.
-    // Reverse through time vector.
-    for(auto time = dataset::m_data_time.rbegin(); time != dataset::m_data_time.rend(); ++time)
-    {
-        // Check if thread stop requested.
-        if(dataset::m_thread_stop)
-        {
-            dataset::m_mutex.unlock();
-            return;
-        }
-
-        *time -= dataset::m_data_time.front();
-    }
-
-    // Unlock the dataset mutex.
+    // Replace member data vectors with thread protection.
+    dataset::m_mutex.lock();
+    dataset::m_data_time = data_time;
+    dataset::m_data_raw = data_raw;
     dataset::m_mutex.unlock();
 
     // Run the calculation worker to initialize the calculations for the newly loaded data.

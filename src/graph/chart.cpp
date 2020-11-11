@@ -43,35 +43,36 @@ QtCharts::QChart* chart::get_chart() const
 
 void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
 {
-    // Lock data for reading.
-    dataset->lock_data();
-
-    // Get references to data.
+    // Get pointers to the data.
     auto time = dataset->data_time();
     auto raw = dataset->data_raw();
     auto fit = dataset->data_fit();
 
+    // Get initial time point.
+    double t0 = 0;
+    if(!time->empty())
+    {
+        t0 = time->front();
+    }
+
     // Populate each series.
     QVector<QPointF> points;
-    points.reserve(time.size());
+    points.reserve(time->size());
 
     // RAW
-    for(uint32_t i = 0; i < raw.size(); ++i)
+    for(uint32_t i = 0; i < raw->size(); ++i)
     {
-        points.push_back(QPointF(time.at(i), raw.at(i)));
+        points.push_back(QPointF(time->at(i) - t0, raw->at(i)));
     }
     chart::m_series_raw->replace(points);
 
     // FIT
     points.clear();
-    for(uint32_t i = 0; i < fit.size(); ++i)
+    for(uint32_t i = 0; i < fit->size(); ++i)
     {
-        points.push_back(QPointF(time.at(i), fit.at(i)));
+        points.push_back(QPointF(time->at(i) - t0, fit->at(i)));
     }
     chart::m_series_fit->replace(points);
-
-    // Unlock data for reading.
-    dataset->unlock_data();
 
     // Reset zoom.
     chart::zoom_reset();
