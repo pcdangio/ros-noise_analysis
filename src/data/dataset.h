@@ -15,10 +15,10 @@ namespace data {
 class dataset
 {
 public:
-    dataset(const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier);
+    dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier);
     ~dataset();
 
-    bool load(const std::shared_ptr<rosbag::Bag> &bag);
+    bool load();
     bool calculate();
     bool is_calculating() const;
 
@@ -42,6 +42,8 @@ public:
     void fit_smoothing(double value);
 
 private:
+    std::shared_ptr<rosbag::Bag> m_bag;
+
     std::string m_name;
     std::string m_topic_name;
     std::string m_field_path;
@@ -60,7 +62,7 @@ private:
     boost::thread m_thread;
     std::atomic<bool> m_thread_running;
     mutable std::mutex m_mutex;
-    void load_worker(std::shared_ptr<rosbag::Bag> bag);
+    void load_worker();
     void calculate_worker();
 };
 

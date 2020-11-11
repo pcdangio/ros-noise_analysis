@@ -6,9 +6,10 @@
 
 using namespace data;
 
-dataset::dataset(const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier)
+dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier)
 {
     // Store items.
+    dataset::m_bag = bag;
     dataset::m_name = name;
     dataset::m_topic_name = topic_name;
     dataset::m_field_path = field_path;
@@ -26,7 +27,7 @@ dataset::~dataset()
     }
 }
 
-bool dataset::load(const std::shared_ptr<rosbag::Bag>& bag)
+bool dataset::load()
 {
     // Check if the dataset is currently loading or calculating.
     if(dataset::m_thread_running)
@@ -37,7 +38,7 @@ bool dataset::load(const std::shared_ptr<rosbag::Bag>& bag)
     // Run the load worker on the thread.
     // NOTE: The load worker will automatically start the calculation worker as well.
     dataset::m_thread_running = true;
-    dataset::m_thread = boost::thread(&dataset::load_worker, this, bag);
+    dataset::m_thread = boost::thread(&dataset::load_worker, this);
 
     return true;
 }
@@ -124,7 +125,7 @@ void dataset::fit_smoothing(double value)
 }
 
 // THREADING
-void dataset::load_worker(std::shared_ptr<rosbag::Bag> bag)
+void dataset::load_worker()
 {
     // Lock the dataset mutex.
     dataset::m_mutex.lock();
@@ -137,7 +138,7 @@ void dataset::load_worker(std::shared_ptr<rosbag::Bag> bag)
     message_introspection::introspector introspector;
 
     // Use a view to get the topic data.
-    rosbag::View view(*bag, rosbag::TopicQuery(dataset::m_topic_name));
+    rosbag::View view(*dataset::m_bag, rosbag::TopicQuery(dataset::m_topic_name));
 
     // Populate the raw data.
     for(auto instance = view.begin(); instance != view.end(); ++instance)

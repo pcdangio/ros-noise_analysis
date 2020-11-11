@@ -221,6 +221,23 @@ void form_main::update_table_datasets()
     }
 }
 
+bool form_main::get_selected_dataset(uint32_t& index)
+{
+    // Get current selected range.
+    auto selected_range = form_main::ui->table_datasets->selectedRanges();
+
+    // Check if the selection is empty.
+    if(selected_range.empty())
+    {
+        return false;
+    }
+
+    // Determine what the selected row index is.
+    index = selected_range.front().topRow();
+
+    return true;
+}
+
 // SLOTS - TOOLBAR_TABLE
 void form_main::toolbar_table_add()
 {
@@ -259,13 +276,16 @@ void form_main::toolbar_table_add()
     }
 
     // Add the candidate as a new dataset.
-    form_main::m_data_interface.add_dataset(candidate_field);
+    auto new_dataset = form_main::m_data_interface.add_dataset(candidate_field);
 
     // Update datasets table.
     form_main::update_table_datasets();
 
     // Select the last dataset in the list, which was the added.
     form_main::ui->table_datasets->selectRow(form_main::ui->table_datasets->rowCount() - 1);
+
+    // Load new dataset AFTER selecting row (which triggers a plot update).
+    new_dataset->load();
 }
 void form_main::toolbar_table_remove()
 {
@@ -355,41 +375,23 @@ void form_main::on_combobox_topics_currentTextChanged(const QString& text)
 
 void form_main::on_table_datasets_itemSelectionChanged()
 {
-    // Get current selected range.
-    auto selected_range = form_main::ui->table_datasets->selectedRanges();
-
-    // Check if the selection is empty.
-    if(selected_range.empty())
+    uint32_t selected_index;
+    if(form_main::get_selected_dataset(selected_index))
+    {
+        form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(selected_index));
+    }
+    else
     {
         form_main::m_chart.clear();
-        return;
     }
-
-    // Determine what the selected row index is.
-    uint32_t selected_index = selected_range.front().topRow();
-
-    // Plot the associated dataset from the data interface.
-    form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(selected_index));
 }
 
 void form_main::dataset_calculated(quint32 index)
 {
     // Check if the calculated index matches the currently selected index.
 
-    // Get current selected range.
-    auto selected_range = form_main::ui->table_datasets->selectedRanges();
-
-    // Check if the selection is empty.
-    if(selected_range.empty())
-    {
-        return;
-    }
-
-    // Determine what the selected row index is.
-    uint32_t selected_index = selected_range.front().topRow();
-
-    // Verify that the calculated index matches the selected index.
-    if(index == selected_index)
+    uint32_t selected_index;
+    if(form_main::get_selected_dataset(selected_index) && selected_index == index)
     {
         form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(selected_index));
     }

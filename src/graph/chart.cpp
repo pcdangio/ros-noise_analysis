@@ -84,6 +84,14 @@ void chart::clear()
 
 void chart::zoom_reset()
 {
+    // Check if any data exists.
+    if(chart::m_series_raw->points().empty())
+    {
+        chart::m_axis_x->setRange(0, 1);
+        chart::m_axis_y->setRange(-1, 1);
+        return;
+    }
+
     // Get the time limits.
     double x_min = chart::m_series_raw->points().first().x();
     double x_max = chart::m_series_raw->points().last().x();
