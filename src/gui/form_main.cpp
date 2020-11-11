@@ -500,8 +500,14 @@ void form_main::dataset_calculated(quint32 index)
     // Check if the calculated index matches the currently selected index.
     if(selected_index == index)
     {
+        // Get pointer to dataset.
+        auto calculated_dataset = form_main::m_data_interface.get_dataset(selected_index);
+
+        // Update variance display in table.
+        form_main::ui->table_datasets->item(selected_index, 1)->setText(QString::number(calculated_dataset->variance()));
+
         // Update the plot view for selected dataset.
-        form_main::update_plot_view(form_main::m_data_interface.get_dataset(selected_index));
+        form_main::update_plot_view(calculated_dataset);
     }
 }
 
