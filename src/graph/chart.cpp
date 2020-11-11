@@ -43,6 +43,9 @@ QtCharts::QChart* chart::get_chart() const
 
 void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
 {
+    // Lock data for reading.
+    dataset->lock_data();
+
     // Get references to data.
     auto time = dataset->data_time();
     auto raw = dataset->data_raw();
@@ -66,6 +69,9 @@ void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
         points.push_back(QPointF(time.at(i), fit.at(i)));
     }
     chart::m_series_fit->replace(points);
+
+    // Unlock data for reading.
+    dataset->unlock_data();
 
     // Reset zoom.
     chart::zoom_reset();

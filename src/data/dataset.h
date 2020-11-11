@@ -8,20 +8,23 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <functional>
 
 namespace data {
 
 class dataset
 {
 public:
-    dataset(const std::string& name, const std::string& topic_name, const std::string& field_path);
+    dataset(const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier);
+    ~dataset();
 
-    void load(const rosbag::Bag& bag);
+    bool load(const std::shared_ptr<rosbag::Bag> &bag);
     bool calculate();
+    bool is_calculating() const;
 
     // DATA ACCESS
-    void lock_data();
-    void unlock_data();
+    void lock_data() const;
+    void unlock_data() const;
     const std::vector<double>& data_time() const;
     const std::vector<double>& data_raw() const;
     const std::vector<double>& data_fit() const;
@@ -31,7 +34,7 @@ public:
     std::string topic_name() const;
     std::string field_path() const;
 
-    double variance();
+    double variance() const;
 
     uint32_t fit_bases() const;
     double fit_smoothing() const;
@@ -40,6 +43,8 @@ private:
     std::string m_name;
     std::string m_topic_name;
     std::string m_field_path;
+
+    std::function<void(uint64_t)> m_notifier;
 
     std::vector<double> m_data_time;
     std::vector<double> m_data_raw;
@@ -51,7 +56,10 @@ private:
     double m_variance;
 
     boost::thread m_thread;
-    std::mutex m_mutex;
+    std::atomic<bool> m_thread_running;
+    mutable std::mutex m_mutex;
+    void load_worker(std::shared_ptr<rosbag::Bag> bag);
+    void calculate_worker();
 };
 
 }

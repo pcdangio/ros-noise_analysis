@@ -8,7 +8,8 @@ using namespace data;
 
 data_interface::data_interface()
 {
-
+    // Create new bag instance.
+    data_interface::m_bag = std::make_shared<rosbag::Bag>();
 }
 
 bool data_interface::load_bag(std::string bag_path)
@@ -17,9 +18,9 @@ bool data_interface::load_bag(std::string bag_path)
     try
     {
         // Close any open bag files.
-        data_interface::m_bag.close();
+        data_interface::m_bag->close();
         // Open the new bag file.
-        data_interface::m_bag.open(bag_path, rosbag::bagmode::Read);
+        data_interface::m_bag->open(bag_path, rosbag::bagmode::Read);
     }
     catch(const std::exception& error)
     {
@@ -27,20 +28,14 @@ bool data_interface::load_bag(std::string bag_path)
         return false;
     }
 
-    // Emit bag loaded.
-    emit data_interface::bag_loaded();
-
     // Clear any existing datasets.
     data_interface::m_datasets.clear();
-
-    // Emit datasets modified.
-    emit data_interface::datasets_modified();
 
     return true;
 }
 std::string data_interface::bag_name() const
 {
-    boost::filesystem::path bag_path(data_interface::m_bag.getFileName());
+    boost::filesystem::path bag_path(data_interface::m_bag->getFileName());
     return bag_path.filename().string();
 }
 std::set<std::string> data_interface::bag_topics() const
@@ -48,10 +43,10 @@ std::set<std::string> data_interface::bag_topics() const
     // Create set for tracking unique topic names.
     std::set<std::string> unique_topics;
 
-    if(data_interface::m_bag.isOpen())
+    if(data_interface::m_bag->isOpen())
     {
         // Use a view to get the connections.
-        rosbag::View view(data_interface::m_bag);
+        rosbag::View view(*data_interface::m_bag);
         auto connections = view.getConnections();
         // Iterate through the connections to get the topic names.
         for(auto connection = connections.cbegin(); connection != connections.cend(); ++connection)
@@ -66,13 +61,13 @@ std::set<std::string> data_interface::bag_topics() const
 std::shared_ptr<candidate_topic_t> data_interface::get_candidate_topic(const std::string& topic_name) const
 {
     // Check if bag file is open.
-    if(!data_interface::m_bag.isOpen())
+    if(!data_interface::m_bag->isOpen())
     {
         return nullptr;
     }
 
     // Use a view to get the connection info for the topic.
-    rosbag::View view(data_interface::m_bag, rosbag::TopicQuery(topic_name));
+    rosbag::View view(*data_interface::m_bag, rosbag::TopicQuery(topic_name));
     auto connections = view.getConnections();
 
     // Check if the topic exists in the bag.
@@ -123,16 +118,16 @@ void data_interface::add_dataset(const std::shared_ptr<candidate_field_t>& candi
     }
 
     // Create a new dataset.
-    auto dataset = std::make_shared<data::dataset>(dataset_name, candidate_field->topic_name(), candidate_field->full_path());
+    auto dataset = std::make_shared<data::dataset>(dataset_name,
+                                                   candidate_field->topic_name(),
+                                                   candidate_field->full_path(),
+                                                   std::bind(&data_interface::dataset_notifier, this, std::placeholders::_1));
 
     // Add the dataset to the end of the deque.
     data_interface::m_datasets.push_back(dataset);
 
     // Load the dataset.
     dataset->load(data_interface::m_bag);
-
-    // Emit signal.
-    emit data_interface::dataset_added();
 }
 
 uint32_t data_interface::n_datasets() const
@@ -142,4 +137,19 @@ uint32_t data_interface::n_datasets() const
 std::shared_ptr<dataset> data_interface::get_dataset(uint32_t index) const
 {
     return data_interface::m_datasets[index];
+}
+
+void data_interface::dataset_notifier(uint64_t address)
+{
+    // Find the index of the sending dataset's address
+    for(uint32_t i = 0; i < data_interface::m_datasets.size(); ++i)
+    {
+        if(reinterpret_cast<uint64_t>(data_interface::m_datasets[i].get()) == address)
+        {
+            // Emit calculation complete signal.
+            emit data_interface::dataset_calculated(i);
+            // Quit search.
+            break;
+        }
+    }
 }

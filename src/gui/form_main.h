@@ -35,13 +35,11 @@ private slots:
     void toolbar_table_saveas();
     void toolbar_table_open();
 
-    void bag_loaded();
-    void dataset_added();
-    void datasets_modified();
-
     void on_combobox_topics_currentTextChanged(const QString& text);
 
     void on_table_datasets_itemSelectionChanged();
+
+    void dataset_calculated(quint32 index);
 
 private:
     Ui::form_main *ui;

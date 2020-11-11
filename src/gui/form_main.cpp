@@ -21,13 +21,11 @@ form_main::form_main(QWidget *parent)
     form_main::setup_table_datasets();
     form_main::setup_chartview();
 
+    // Connect to data_interface signals.
+    connect(&(form_main::m_data_interface), &data::data_interface::dataset_calculated, this, &form_main::dataset_calculated);
+
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
-
-    // Connect form to data_interface events.
-    connect(&(form_main::m_data_interface), &data::data_interface::bag_loaded, this, &form_main::bag_loaded);
-    connect(&(form_main::m_data_interface), &data::data_interface::dataset_added, this, &form_main::dataset_added);
-    connect(&(form_main::m_data_interface), &data::data_interface::datasets_modified, this, &form_main::datasets_modified);
 
     // Start ros spinner.
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
@@ -109,6 +107,10 @@ void form_main::setup_table_datasets()
 
     // Hide vertical header.
     form_main::ui->table_datasets->verticalHeader()->setVisible(false);
+
+    // Set selection mode.
+    form_main::ui->table_datasets->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
+    form_main::ui->table_datasets->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
 }
 void form_main::setup_chartview()
 {
@@ -208,11 +210,13 @@ void form_main::update_table_datasets()
             item_variance->setText(QString::number(dataset->variance()));
         }
         item_variance->setTextAlignment(Qt::AlignmentFlag::AlignCenter);
+        item_variance->setFlags(item_variance->flags() & ~Qt::ItemFlag::ItemIsEditable);
         form_main::ui->table_datasets->setItem(i, 1, item_variance);
 
         // Set path column
         auto item_path = new QTableWidgetItem();
         item_path->setText(QString::fromStdString(dataset->topic_name() + "::" + dataset->field_path()));
+        item_path->setFlags(item_path->flags() & ~Qt::ItemFlag::ItemIsEditable);
         form_main::ui->table_datasets->setItem(i, 2, item_path);
     }
 }
@@ -256,6 +260,12 @@ void form_main::toolbar_table_add()
 
     // Add the candidate as a new dataset.
     form_main::m_data_interface.add_dataset(candidate_field);
+
+    // Update datasets table.
+    form_main::update_table_datasets();
+
+    // Select the last dataset in the list, which was the added.
+    form_main::ui->table_datasets->selectRow(form_main::ui->table_datasets->rowCount() - 1);
 }
 void form_main::toolbar_table_remove()
 {
@@ -318,30 +328,20 @@ void form_main::on_button_open_bag_clicked()
     if(!form_main::m_data_interface.load_bag(dialog.selectedFiles().front().toStdString()))
     {
         QMessageBox::warning(this, "Error", "Error loading bag file. See ROS log for more information.");
+        return;
     }
-}
 
-void form_main::bag_loaded()
-{
     // Update bag name line edit.
     form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_interface.bag_name()));
 
     // Update topics combobox.
     form_main::update_combobox_topics();
-}
-void form_main::dataset_added()
-{
-    // Update datasets table.
-    form_main::update_table_datasets();
 
-    // Select the last dataset in the list, which was the added.
-    form_main::ui->table_datasets->selectRow(form_main::ui->table_datasets->rowCount() - 1);
-}
-void form_main::datasets_modified()
-{
-    // Update datasets table.
+    // Update the dataset table.
     form_main::update_table_datasets();
 }
+
+
 
 void form_main::on_combobox_topics_currentTextChanged(const QString& text)
 {
@@ -366,8 +366,31 @@ void form_main::on_table_datasets_itemSelectionChanged()
     }
 
     // Determine what the selected row index is.
-    uint32_t row_index = selected_range.front().topRow();
+    uint32_t selected_index = selected_range.front().topRow();
 
     // Plot the associated dataset from the data interface.
-    form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(row_index));
+    form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(selected_index));
+}
+
+void form_main::dataset_calculated(quint32 index)
+{
+    // Check if the calculated index matches the currently selected index.
+
+    // Get current selected range.
+    auto selected_range = form_main::ui->table_datasets->selectedRanges();
+
+    // Check if the selection is empty.
+    if(selected_range.empty())
+    {
+        return;
+    }
+
+    // Determine what the selected row index is.
+    uint32_t selected_index = selected_range.front().topRow();
+
+    // Verify that the calculated index matches the selected index.
+    if(index == selected_index)
+    {
+        form_main::m_chart.plot_dataset(form_main::m_data_interface.get_dataset(selected_index));
+    }
 }

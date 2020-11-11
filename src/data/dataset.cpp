@@ -6,64 +6,66 @@
 
 using namespace data;
 
-dataset::dataset(const std::string& name, const std::string& topic_name, const std::string& field_path)
+dataset::dataset(const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier)
 {
     // Store items.
     dataset::m_name = name;
     dataset::m_topic_name = topic_name;
     dataset::m_field_path = field_path;
+    dataset::m_notifier = notifier;
 
     // Initialize members.
     dataset::m_variance = std::numeric_limits<double>::quiet_NaN();
+    dataset::m_thread_running = false;
+}
+dataset::~dataset()
+{
+    if(dataset::m_thread_running)
+    {
+        dataset::m_thread.join();
+    }
 }
 
-void dataset::load(const rosbag::Bag& bag)
+bool dataset::load(const std::shared_ptr<rosbag::Bag>& bag)
 {
-    // Load the raw data from the bag.
-
-    // Clear existing data.
-    dataset::m_data_time.clear();
-    dataset::m_data_raw.clear();
-
-    // Create an introspector for reading the data.
-    message_introspection::introspector introspector;
-
-    // Use a view to get the topic data.
-    rosbag::View view(bag, rosbag::TopicQuery(dataset::m_topic_name));
-
-    // Populate the raw data.
-    for(auto instance = view.begin(); instance != view.end(); ++instance)
+    // Check if the dataset is currently loading or calculating.
+    if(dataset::m_thread_running)
     {
-        // Use introspector to read the message.
-        introspector.new_message(*instance);
-        // Get the field as a double.
-        double value;
-        if(introspector.get_number(dataset::m_field_path, value))
-        {
-            // Add it to the raw data buffer.
-            dataset::m_data_time.push_back(instance->getTime().toSec());
-            dataset::m_data_raw.push_back(value);
-        }
+        return false;
     }
 
-    // Remove time offset.
-    // Reverse through time vector.
-    for(auto time = dataset::m_data_time.rbegin(); time != dataset::m_data_time.rend(); ++time)
-    {
-        *time -= dataset::m_data_time.front();
-    }
+    // Run the load worker on the thread.
+    // NOTE: The load worker will automatically start the calculation worker as well.
+    dataset::m_thread_running = true;
+    dataset::m_thread = boost::thread(&dataset::load_worker, this, bag);
+
+    return true;
 }
 bool dataset::calculate()
 {
+    // Check if the dataset is currently loading or calculating.
+    if(dataset::m_thread_running)
+    {
+        return false;
+    }
 
+    // Run the calculation worker on the thread.
+    dataset::m_thread_running = true;
+    dataset::m_thread = boost::thread(&dataset::calculate_worker, this);
+
+    return true;
+}
+bool dataset::is_calculating() const
+{
+    return dataset::m_thread_running;
 }
 
 // DATA ACCESS
-void dataset::lock_data()
+void dataset::lock_data() const
 {
     dataset::m_mutex.lock();
 }
-void dataset::unlock_data()
+void dataset::unlock_data() const
 {
     dataset::m_mutex.unlock();
 }
@@ -94,20 +96,74 @@ std::string dataset::field_path() const
     return dataset::m_field_path;
 }
 
-double dataset::variance()
+double dataset::variance() const
 {
-    dataset::m_mutex.lock();
-    double output = dataset::m_variance;
-    dataset::m_mutex.unlock();
-
-    return output;
+    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
+    return dataset::m_variance;
 }
 
 uint32_t dataset::fit_bases() const
 {
+    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
     return dataset::m_fit_bases;
 }
 double dataset::fit_smoothing() const
 {
+    std::lock_guard<std::mutex> scoped_lock(dataset::m_mutex);
     return dataset::m_fit_smoothing;
+}
+
+// THREADING
+void dataset::load_worker(std::shared_ptr<rosbag::Bag> bag)
+{
+    // Lock the dataset mutex.
+    dataset::m_mutex.lock();
+
+    // Clear existing data.
+    dataset::m_data_time.clear();
+    dataset::m_data_raw.clear();
+
+    // Create an introspector for reading the data.
+    message_introspection::introspector introspector;
+
+    // Use a view to get the topic data.
+    rosbag::View view(*bag, rosbag::TopicQuery(dataset::m_topic_name));
+
+    // Populate the raw data.
+    for(auto instance = view.begin(); instance != view.end(); ++instance)
+    {
+        // Use introspector to read the message.
+        introspector.new_message(*instance);
+        // Get the field as a double.
+        double value;
+        if(introspector.get_number(dataset::m_field_path, value))
+        {
+            // Add it to the raw data buffer.
+            dataset::m_data_time.push_back(instance->getTime().toSec());
+            dataset::m_data_raw.push_back(value);
+        }
+    }
+
+    // Remove time offset.
+    // Reverse through time vector.
+    for(auto time = dataset::m_data_time.rbegin(); time != dataset::m_data_time.rend(); ++time)
+    {
+        *time -= dataset::m_data_time.front();
+    }
+
+    // Unlock the dataset mutex.
+    dataset::m_mutex.unlock();
+
+    // Run the calculation worker to initialize the calculations for the newly loaded data.
+    calculate_worker();
+    // NOTE: calculate worker will indicate thread is finished.
+}
+void dataset::calculate_worker()
+{
+
+    // Raise notifier and pass memory address of this instance.
+    dataset::m_notifier(reinterpret_cast<uint64_t>(this));
+
+    // Indicate that thread is no longer running.
+    dataset::m_thread_running = false;
 }
