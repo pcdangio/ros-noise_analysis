@@ -198,26 +198,36 @@ void dataset::calculate_worker()
         basis_ratio = dataset::m_fit_basis_ratio;
         smoothing = dataset::m_fit_smoothing;
 
+        // Calculate number of bases.
+        // Alglib requires at least 4. Limit to 100 for computation.
+        double bases = std::max(4.0, std::min(100.0, basis_ratio * dataset::m_data_time->size()));
+
+        // Set up alglib structures.
         // Set up X and Y arrays.
         alglib::real_1d_array x, y;
-
-        // Store content from internal vectors to avoid copies.
-        x.setcontent(dataset::m_data_time->size(), dataset::m_data_time->data());
-        y.setcontent(dataset::m_data_raw->size(), dataset::m_data_raw->data());
-
         // Set up spline interpolant and fit report structures to capture output.
         alglib::spline1dinterpolant interpolant;
         alglib::spline1dfitreport fit_report;
-        alglib::ae_int_t result;
+        alglib::ae_int_t result = 0;
 
-        // Perform fitting.
+        // Try to fit spline.
         try
         {
-            alglib::spline1dfitpenalized(x, y, x.length(), basis_ratio * x.length(), smoothing, result, interpolant, fit_report);
+            // Store content from internal vectors to avoid copies.
+            x.setcontent(dataset::m_data_time->size(), dataset::m_data_time->data());
+            y.setcontent(dataset::m_data_raw->size(), dataset::m_data_raw->data());
+
+            // Perform fitting.
+            alglib::spline1dfitpenalized(x, y, x.length(), bases, smoothing, result, interpolant, fit_report);
+
+            if(result <= 0)
+            {
+                ROS_ERROR_STREAM("alglib failed to generate spline fit (" << result << ")");
+            }
         }
-        catch(const std::exception& e)
+        catch(const alglib::ap_error& e)
         {
-            ROS_ERROR_STREAM("alglib failed to generate spline fit (" << e.what() << ")");
+            ROS_ERROR_STREAM("alglib failed to generate spline fit (" << e.msg << ")");
         }
 
         // Check result.
@@ -245,14 +255,10 @@ void dataset::calculate_worker()
             dataset::m_data_fit = data_fit;
             dataset::m_variance = variance;
             dataset::m_mutex.unlock();
-        }
-        else
-        {
-            ROS_ERROR_STREAM("alglib failed to generate spline fit (" << result << ")");
-        }
 
-        // Raise notifier and pass memory address of this instance.
-        dataset::m_notifier(reinterpret_cast<uint64_t>(this));
+            // Raise notifier and pass memory address of this instance.
+            dataset::m_notifier(reinterpret_cast<uint64_t>(this));
+        }
     }
 
     // Indicate that thread is no longer running.
