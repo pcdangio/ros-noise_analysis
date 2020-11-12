@@ -204,7 +204,14 @@ void dataset::calculate_worker()
     alglib::ae_int_t result;
 
     // Perform fitting.
-    alglib::spline1dfitpenalized(x, y, x.length(), dataset::m_fit_basis_ratio * x.length(), dataset::m_fit_smoothing, result, interpolant, fit_report);
+    try
+    {
+        alglib::spline1dfitpenalized(x, y, x.length(), dataset::m_fit_basis_ratio * x.length(), dataset::m_fit_smoothing, result, interpolant, fit_report);
+    }
+    catch(const std::exception& e)
+    {
+        ROS_ERROR_STREAM("alglib failed to generate spline fit (" << e.what() << ")");
+    }
 
     // Check result.
     if(result > 0)

@@ -97,20 +97,22 @@ void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
         chart::m_series_fit->replace(points);
 
         // NOISE_P/M
-        QVector<QPointF> range_p, range_m;
-        range_p.reserve(chart::m_series_fit->points().size());
-        range_m.reserve(chart::m_series_fit->points().size());
         // Calculate standard deviation.
         double standard_deviation = std::sqrt(dataset->variance());
-        // Iterate over fit to add noise range to it.
+        // NOISE_P
+        points.clear();
         for(uint32_t i = 0; i < time->size(); ++i)
         {
-            range_p.push_back(QPointF(time->at(i) - t0, fit->at(i) + standard_deviation));
-            range_m.push_back(QPointF(time->at(i) - t0, fit->at(i) - standard_deviation));
+            points.push_back(QPointF(time->at(i) - t0, fit->at(i) + standard_deviation));
         }
-        // Add points to series.
-        chart::m_series_noise_p->replace(range_p);
-        chart::m_series_noise_m->replace(range_m);
+        chart::m_series_noise_p->replace(points);
+        // NOISE_M
+        points.clear();
+        for(uint32_t i = 0; i < time->size(); ++i)
+        {
+            points.push_back(QPointF(time->at(i) - t0, fit->at(i) - standard_deviation));
+        }
+        chart::m_series_noise_m->replace(points);
     }
     else
     {
