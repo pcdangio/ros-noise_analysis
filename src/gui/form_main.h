@@ -39,10 +39,6 @@ private slots:
     void toolbar_zoom_rectangle();
     void toolbar_zoom_horizontal();
     void toolbar_zoom_vertical();
-    void toolbar_noise_none();
-    void toolbar_noise_68();
-    void toolbar_noise_95();
-    void toolbar_noise_99();
 
     void on_combobox_topics_currentTextChanged(const QString& text);
 

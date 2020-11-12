@@ -134,23 +134,6 @@ void form_main::setup_toolbar_chart()
     auto action_zoom_horizontal = toolbar_chart->addAction(QIcon::fromTheme("object-flip-horizontal"), "Zoom Horizontal");
     auto action_zoom_vertical = toolbar_chart->addAction(QIcon::fromTheme("object-flip-vertical"), "Zoom Vertical");
 
-    // Add actions for noise type.
-    // Create a menu for the noise type.
-    QMenu* menu_noise = new QMenu();
-    auto action_noise_none = menu_noise->addAction("None");
-    menu_noise->addSeparator();
-    auto action_noise_68 = menu_noise->addAction("68%");
-    auto action_noise_95 = menu_noise->addAction("95%");
-    auto action_noise_99 = menu_noise->addAction("99%");
-    // Add menu to toolbutton.
-    QToolButton* toolbutton_noise = new QToolButton();
-    toolbutton_noise->setIcon(QIcon::fromTheme("list-add"));
-    toolbutton_noise->setToolTip("Variance Display");
-    toolbutton_noise->setMenu(menu_noise);
-    toolbutton_noise->setPopupMode(QToolButton::InstantPopup);
-    toolbar_chart->addSeparator();
-    toolbar_chart->addWidget(toolbutton_noise);
-
     // Add toolbar to chart's layout.
     form_main::ui->layout_chartview->insertWidget(0, toolbar_chart);
 
@@ -159,10 +142,6 @@ void form_main::setup_toolbar_chart()
     connect(action_zoom_rectangle, &QAction::triggered, this, &form_main::toolbar_zoom_rectangle);
     connect(action_zoom_horizontal, &QAction::triggered, this, &form_main::toolbar_zoom_horizontal);
     connect(action_zoom_vertical, &QAction::triggered, this, &form_main::toolbar_zoom_vertical);
-    connect(action_noise_none, &QAction::triggered, this, &form_main::toolbar_noise_none);
-    connect(action_noise_68, &QAction::triggered, this, &form_main::toolbar_noise_68);
-    connect(action_noise_95, &QAction::triggered, this, &form_main::toolbar_noise_95);
-    connect(action_noise_99, &QAction::triggered, this, &form_main::toolbar_noise_99);
 }
 
 void form_main::update_combobox_topics()
@@ -495,22 +474,6 @@ void form_main::toolbar_zoom_vertical()
 {
     form_main::ui->chartview->setRubberBand(QChartView::RubberBand::VerticalRubberBand);
     form_main::ui->chartview->setCursor(Qt::CursorShape::SplitVCursor);
-}
-void form_main::toolbar_noise_none()
-{
-    form_main::m_chart.set_noise_range(0);
-}
-void form_main::toolbar_noise_68()
-{
-    form_main::m_chart.set_noise_range(1);
-}
-void form_main::toolbar_noise_95()
-{
-    form_main::m_chart.set_noise_range(2);
-}
-void form_main::toolbar_noise_99()
-{
-    form_main::m_chart.set_noise_range(3);
 }
 
 // ROS
