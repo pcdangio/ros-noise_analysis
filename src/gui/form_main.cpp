@@ -32,13 +32,12 @@ form_main::form_main(QWidget *parent)
     connect(&(form_main::m_ros_spinner), &QTimer::timeout, this, &form_main::ros_spin);
     form_main::m_ros_spinner.start(10);
 }
-
 form_main::~form_main()
 {
     delete ui;
 }
 
-// UI
+// UI - SETUP
 void form_main::setup_splitter()
 {
     // Set data splitter to stretch equally.
@@ -144,6 +143,7 @@ void form_main::setup_toolbar_chart()
     connect(action_zoom_vertical, &QAction::triggered, this, &form_main::toolbar_zoom_vertical);
 }
 
+// UI - UPDATE
 void form_main::update_combobox_topics()
 {
     // Clear existing topics.
@@ -274,21 +274,87 @@ void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
     }
 }
 
-bool form_main::get_selected_dataset(uint32_t& index)
+// SLOTS - FORM
+void form_main::on_button_open_bag_clicked()
 {
-    // Get current selected range.
-    auto selected_range = form_main::ui->table_datasets->selectedRanges();
+    // Build open file dialog.
+    QFileDialog dialog(this);
+    dialog.setFileMode(QFileDialog::FileMode::ExistingFile);
+    dialog.setViewMode(QFileDialog::ViewMode::Detail);
+    dialog.setNameFilter("ROS Bag (*.bag)");
 
-    // Check if the selection is empty.
-    if(selected_range.empty())
+    // Show dialog.
+    if(!dialog.exec())
     {
-        return false;
+        return;
     }
 
-    // Determine what the selected row index is.
-    index = selected_range.front().topRow();
+    // Try to load bag file.
+    if(!form_main::m_data_interface.load_bag(dialog.selectedFiles().front().toStdString()))
+    {
+        QMessageBox::warning(this, "Error", "Error loading bag file. See ROS log for more information.");
+        return;
+    }
 
-    return true;
+    // Update bag name line edit.
+    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_interface.bag_name()));
+
+    // Update topics combobox.
+    form_main::update_combobox_topics();
+
+    // Update the dataset table.
+    form_main::update_table_datasets();
+}
+void form_main::on_combobox_topics_currentTextChanged(const QString& text)
+{
+    // Get a new candidate topic from the data interface.
+    form_main::m_candidate_topic = form_main::m_data_interface.get_candidate_topic(text.toStdString());
+
+    // Update the message tree view.
+    form_main::update_tree_message();
+}
+void form_main::on_table_datasets_cellClicked(int row, int /*column*/)
+{
+    // Update the plot view for selected index.
+    form_main::update_plot_view(form_main::m_data_interface.get_dataset(row));
+}
+void form_main::on_slider_bases_valueChanged(int value)
+{
+    // Update the selected dataset's basis ratio.
+    uint32_t index;
+    if(!form_main::get_selected_dataset(index))
+    {
+        // No dataset selected.
+        return;
+    }
+
+    // Get selected dataset.
+    auto selected_dataset = form_main::m_data_interface.get_dataset(index);
+
+    // Update basis ratio.
+    selected_dataset->fit_bases(static_cast<uint32_t>(value));
+
+    // Rerun calculation if it's not already running.
+    selected_dataset->calculate();
+}
+void form_main::on_slider_smoothness_valueChanged(int value)
+{
+    // Update the selected dataset's smoothing.
+    uint32_t index;
+    if(!form_main::get_selected_dataset(index))
+    {
+        // No dataset selected.
+        return;
+    }
+
+    // Get selected dataset.
+    auto selected_dataset = form_main::m_data_interface.get_dataset(index);
+
+    // Update basis ratio.
+    selected_dataset->fit_smoothing(static_cast<double>(value) / 10.0);
+
+    // Rerun calculation if it's not already running.
+    selected_dataset->calculate();
 }
 
 // SLOTS - TOOLBAR_TABLE
@@ -479,62 +545,7 @@ void form_main::toolbar_zoom_vertical()
     form_main::ui->chartview->setCursor(Qt::CursorShape::SplitVCursor);
 }
 
-// ROS
-void form_main::ros_spin()
-{
-    // Handle callbacks.
-    ros::spinOnce();
-
-    // Quit if ROS shutting down.
-    if(!ros::ok())
-    {
-        QApplication::quit();
-    }
-}
-
-
-void form_main::on_button_open_bag_clicked()
-{
-    // Build open file dialog.
-    QFileDialog dialog(this);
-    dialog.setFileMode(QFileDialog::FileMode::ExistingFile);
-    dialog.setViewMode(QFileDialog::ViewMode::Detail);
-    dialog.setNameFilter("ROS Bag (*.bag)");
-
-    // Show dialog.
-    if(!dialog.exec())
-    {
-        return;
-    }
-
-    // Try to load bag file.
-    if(!form_main::m_data_interface.load_bag(dialog.selectedFiles().front().toStdString()))
-    {
-        QMessageBox::warning(this, "Error", "Error loading bag file. See ROS log for more information.");
-        return;
-    }
-
-    // Update bag name line edit.
-    form_main::ui->lineedit_bag->setText(QString::fromStdString(form_main::m_data_interface.bag_name()));
-
-    // Update topics combobox.
-    form_main::update_combobox_topics();
-
-    // Update the dataset table.
-    form_main::update_table_datasets();
-}
-
-
-
-void form_main::on_combobox_topics_currentTextChanged(const QString& text)
-{
-    // Get a new candidate topic from the data interface.
-    form_main::m_candidate_topic = form_main::m_data_interface.get_candidate_topic(text.toStdString());
-
-    // Update the message tree view.
-    form_main::update_tree_message();
-}
-
+// SLOTS - COMPONENTS
 void form_main::dataset_calculated(quint32 index)
 {
     // If the newly calculated dataset is the one being displayed, update the plot.
@@ -561,49 +572,33 @@ void form_main::dataset_calculated(quint32 index)
     }
 }
 
-
-void form_main::on_table_datasets_cellClicked(int row, int /*column*/)
+// ROS
+void form_main::ros_spin()
 {
-    // Update the plot view for selected index.
-    form_main::update_plot_view(form_main::m_data_interface.get_dataset(row));
+    // Handle callbacks.
+    ros::spinOnce();
+
+    // Quit if ROS shutting down.
+    if(!ros::ok())
+    {
+        QApplication::quit();
+    }
 }
 
-void form_main::on_slider_bases_valueChanged(int value)
+// METHODS
+bool form_main::get_selected_dataset(uint32_t& index)
 {
-    // Update the selected dataset's basis ratio.
-    uint32_t index;
-    if(!form_main::get_selected_dataset(index))
+    // Get current selected range.
+    auto selected_range = form_main::ui->table_datasets->selectedRanges();
+
+    // Check if the selection is empty.
+    if(selected_range.empty())
     {
-        // No dataset selected.
-        return;
+        return false;
     }
 
-    // Get selected dataset.
-    auto selected_dataset = form_main::m_data_interface.get_dataset(index);
+    // Determine what the selected row index is.
+    index = selected_range.front().topRow();
 
-    // Update basis ratio.
-    selected_dataset->fit_bases(static_cast<uint32_t>(value));
-
-    // Rerun calculation if it's not already running.
-    selected_dataset->calculate();
-}
-
-void form_main::on_slider_smoothness_valueChanged(int value)
-{
-    // Update the selected dataset's smoothing.
-    uint32_t index;
-    if(!form_main::get_selected_dataset(index))
-    {
-        // No dataset selected.
-        return;
-    }
-
-    // Get selected dataset.
-    auto selected_dataset = form_main::m_data_interface.get_dataset(index);
-
-    // Update basis ratio.
-    selected_dataset->fit_smoothing(static_cast<double>(value) / 10.0);
-
-    // Rerun calculation if it's not already running.
-    selected_dataset->calculate();
+    return true;
 }
