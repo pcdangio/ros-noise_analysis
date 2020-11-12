@@ -24,7 +24,7 @@ dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& nam
 
     // Initialize members.
     dataset::m_variance = std::numeric_limits<double>::quiet_NaN();
-    dataset::m_fit_basis_ratio = 0.01;
+    dataset::m_fit_bases = 10;
     dataset::m_fit_smoothing = 1.0;
     dataset::m_thread_running = false;
     dataset::m_thread_stop = false;
@@ -118,13 +118,15 @@ double dataset::variance() const
     return dataset::m_variance;
 }
 
-double dataset::fit_basis_ratio() const
+uint32_t dataset::fit_bases() const
 {
-    return dataset::m_fit_basis_ratio;
+    return dataset::m_fit_bases;
 }
-void dataset::fit_basis_ratio(double value)
+void dataset::fit_bases(uint32_t value)
 {
-    dataset::m_fit_basis_ratio = value;
+    // Store value between 4 and 100.
+    // 4 is minimum allowable for alglib, and 100 is max for computation.
+    dataset::m_fit_bases = std::max(4U, std::min(100U, value));
 }
 double dataset::fit_smoothing() const
 {
@@ -190,17 +192,13 @@ void dataset::calculate_worker()
     // Repeat as long as the working fit parameters do not match the member parameters.
     // When they are mismatched it needs to retrigger a calculation because the
     // member is being changed externally while the calculatoin thread runs.
-    double basis_ratio = std::numeric_limits<double>::quiet_NaN();
+    uint32_t bases = 0;
     double smoothing = std::numeric_limits<double>::quiet_NaN();
-    while(basis_ratio != dataset::m_fit_basis_ratio || smoothing != dataset::m_fit_smoothing)
+    while(bases != dataset::m_fit_bases || smoothing != dataset::m_fit_smoothing)
     {
         // Grab working copy of fit parameters.
-        basis_ratio = dataset::m_fit_basis_ratio;
+        bases = dataset::m_fit_bases;
         smoothing = dataset::m_fit_smoothing;
-
-        // Calculate number of bases.
-        // Alglib requires at least 4. Limit to 100 for computation.
-        double bases = std::max(4.0, std::min(100.0, basis_ratio * dataset::m_data_time->size()));
 
         // Set up alglib structures.
         // Set up X and Y arrays.

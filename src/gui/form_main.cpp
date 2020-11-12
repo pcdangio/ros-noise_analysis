@@ -571,7 +571,7 @@ void form_main::on_table_datasets_cellClicked(int row, int /*column*/)
     form_main::update_plot_view(form_main::m_data_interface.get_dataset(row));
 }
 
-void form_main::on_slider_basis_ratio_valueChanged(int value)
+void form_main::on_slider_bases_valueChanged(int value)
 {
     // Update the selected dataset's basis ratio.
     uint32_t index;
@@ -585,7 +585,7 @@ void form_main::on_slider_basis_ratio_valueChanged(int value)
     auto selected_dataset = form_main::m_data_interface.get_dataset(index);
 
     // Update basis ratio.
-    selected_dataset->fit_basis_ratio(static_cast<double>(value) / 100.0);
+    selected_dataset->fit_bases(static_cast<uint32_t>(value));
 
     // Rerun calculation if it's not already running.
     selected_dataset->calculate();

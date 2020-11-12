@@ -35,8 +35,8 @@ public:
 
     double variance() const;
 
-    double fit_basis_ratio() const;
-    void fit_basis_ratio(double value);
+    uint32_t fit_bases() const;
+    void fit_bases(uint32_t value);
     double fit_smoothing() const;
     void fit_smoothing(double value);
 
@@ -53,7 +53,7 @@ private:
     std::shared_ptr<std::vector<double>> m_data_raw;
     std::shared_ptr<std::vector<double>> m_data_fit;
 
-    double m_fit_basis_ratio;
+    uint32_t m_fit_bases;
     double m_fit_smoothing;
 
     double m_variance;
