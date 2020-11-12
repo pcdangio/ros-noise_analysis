@@ -256,10 +256,12 @@ void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
 
         // Update the sliders.
         // Block signals so slider value changed is not signaled.
-        form_main::blockSignals(true);
-        form_main::ui->slider_basis_ratio->setValue(dataset->fit_basis_ratio() * 100.0);
+        form_main::ui->slider_bases->blockSignals(true);
+        form_main::ui->slider_smoothness->blockSignals(true);
+        form_main::ui->slider_bases->setValue(dataset->fit_bases());
         form_main::ui->slider_smoothness->setValue(dataset->fit_smoothing() * 10.0);
-        form_main::blockSignals(false);
+        form_main::ui->slider_bases->blockSignals(false);
+        form_main::ui->slider_smoothness->blockSignals(false);
     }
     else
     {
@@ -268,12 +270,7 @@ void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
         // Clear the chart.
         form_main::m_chart.plot_dataset(nullptr);
 
-        // Reset the sliders.
-        // Block signals so slider value changed is not signaled.
-        form_main::blockSignals(true);
-        form_main::ui->slider_basis_ratio->setValue(1);
-        form_main::ui->slider_smoothness->setValue(10);
-        form_main::blockSignals(false);
+        // No need to reset sliders.
     }
 }
 
