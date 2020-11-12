@@ -255,8 +255,11 @@ void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
         form_main::m_chart.plot_dataset(dataset);
 
         // Update the sliders.
+        // Block signals so slider value changed is not signaled.
+        form_main::blockSignals(true);
         form_main::ui->slider_basis_ratio->setValue(dataset->fit_basis_ratio() * 100.0);
         form_main::ui->slider_smoothness->setValue(dataset->fit_smoothing() * 10.0);
+        form_main::blockSignals(false);
     }
     else
     {
@@ -266,8 +269,11 @@ void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
         form_main::m_chart.plot_dataset(nullptr);
 
         // Reset the sliders.
-        form_main::ui->slider_basis_ratio->setValue(50);
+        // Block signals so slider value changed is not signaled.
+        form_main::blockSignals(true);
+        form_main::ui->slider_basis_ratio->setValue(1);
         form_main::ui->slider_smoothness->setValue(10);
+        form_main::blockSignals(false);
     }
 }
 
@@ -336,11 +342,11 @@ void form_main::toolbar_table_add()
     // Update datasets table.
     form_main::update_table_datasets();
 
-    // Clear the plot view.
-    form_main::update_plot_view(nullptr);
-
     // Select the last dataset in the list, which was the added.
     form_main::ui->table_datasets->selectRow(form_main::ui->table_datasets->rowCount() - 1);
+
+    // Clear the plot view AFTER selection has been updated.
+    form_main::update_plot_view(nullptr);
 }
 void form_main::toolbar_table_remove()
 {
@@ -563,4 +569,44 @@ void form_main::on_table_datasets_cellClicked(int row, int /*column*/)
 {
     // Update the plot view for selected index.
     form_main::update_plot_view(form_main::m_data_interface.get_dataset(row));
+}
+
+void form_main::on_slider_basis_ratio_valueChanged(int value)
+{
+    // Update the selected dataset's basis ratio.
+    uint32_t index;
+    if(!form_main::get_selected_dataset(index))
+    {
+        // No dataset selected.
+        return;
+    }
+
+    // Get selected dataset.
+    auto selected_dataset = form_main::m_data_interface.get_dataset(index);
+
+    // Update basis ratio.
+    selected_dataset->fit_basis_ratio(static_cast<double>(value) / 100.0);
+
+    // Rerun calculation if it's not already running.
+    selected_dataset->calculate();
+}
+
+void form_main::on_slider_smoothness_valueChanged(int value)
+{
+    // Update the selected dataset's smoothing.
+    uint32_t index;
+    if(!form_main::get_selected_dataset(index))
+    {
+        // No dataset selected.
+        return;
+    }
+
+    // Get selected dataset.
+    auto selected_dataset = form_main::m_data_interface.get_dataset(index);
+
+    // Update basis ratio.
+    selected_dataset->fit_smoothing(static_cast<double>(value) / 10.0);
+
+    // Rerun calculation if it's not already running.
+    selected_dataset->calculate();
 }

@@ -47,6 +47,10 @@ private slots:
 
     void on_table_datasets_cellClicked(int row, int column);
 
+    void on_slider_basis_ratio_valueChanged(int value);
+
+    void on_slider_smoothness_valueChanged(int value);
+
 private:
     Ui::form_main *ui;
 
