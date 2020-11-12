@@ -14,6 +14,9 @@
 #include <string>
 #include <deque>
 #include <unordered_set>
+#include <mutex>
+
+#include <boost/thread.hpp>
 
 namespace data {
 
@@ -23,6 +26,7 @@ class data_interface
     Q_OBJECT
 public:
     data_interface();
+    ~data_interface();
 
     bool load_bag(std::string bag_path);
     std::string bag_name() const;
@@ -39,8 +43,11 @@ public:
     uint32_t n_datasets() const;
     std::shared_ptr<dataset> get_dataset(uint32_t index) const;
 
+    bool start_covariance_calculation();
+    void stop_covariance_calculation();
 signals:
     void dataset_calculated(quint32 index);
+    void covariance_matrix_calculated(std::shared_ptr<std::vector<std::vector<double>>> matrix);
 
 private:
     std::shared_ptr<rosbag::Bag> m_bag;
@@ -49,6 +56,11 @@ private:
     std::shared_ptr<dataset> m_selected_dataset;
 
     void dataset_notifier(uint64_t address);
+
+    boost::thread m_thread;
+    std::atomic<bool> m_thread_running;
+    std::atomic<bool> m_thread_stop;
+    void covariance_matrix_worker();
 };
 
 }

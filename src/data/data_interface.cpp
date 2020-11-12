@@ -10,6 +10,15 @@ data_interface::data_interface()
 {
     // Create new bag instance.
     data_interface::m_bag = std::make_shared<rosbag::Bag>();
+
+    // Initialize members.
+    data_interface::m_thread_running = false;
+    data_interface::m_thread_stop = false;
+}
+data_interface::~data_interface()
+{
+    // Cancel covariance calculation if it's running.
+    data_interface::stop_covariance_calculation();
 }
 
 bool data_interface::load_bag(std::string bag_path)
@@ -204,4 +213,75 @@ void data_interface::dataset_notifier(uint64_t address)
             break;
         }
     }
+}
+
+
+bool data_interface::start_covariance_calculation()
+{
+    if(data_interface::m_thread_running)
+    {
+        return false;
+    }
+
+    // Start thread.
+    data_interface::m_thread_running = true;
+    data_interface::m_thread_stop = false;
+    data_interface::m_thread = boost::thread(&data_interface::covariance_matrix_worker, this);
+
+    return true;
+}
+void data_interface::stop_covariance_calculation()
+{
+    if(data_interface::m_thread_running)
+    {
+        data_interface::m_thread_stop = true;
+        data_interface::m_thread.join();
+    }
+}
+void data_interface::covariance_matrix_worker()
+{
+    // ASSUME FORM PREVENTS CHANGES TO DATASET WHILE CALCULATION RUNNING
+
+    // Create covariance matrix and fill it with zeros so it can be indexed.
+    auto matrix = std::make_shared<std::vector<std::vector<double>>>();
+    for(uint32_t j = 0; j < data_interface::m_datasets.size(); ++j)
+    {
+        matrix->push_back(std::vector<double>(data_interface::m_datasets.size(), 0.0));
+    }
+
+    // Iterate through all unique combinations of datasets.
+    for(uint32_t i = 0; i < data_interface::m_datasets.size(); ++i)
+    {
+        for(uint32_t j = i; j < data_interface::m_datasets.size(); ++j)
+        {
+            // Check if stop required.
+            if(data_interface::m_thread_stop)
+            {
+                // Use goto to exit both loops.
+                goto iteration_complete;
+            }
+
+            // Check if on diagonal.
+            if(i == j)
+            {
+                // Set to dataset's covariance.
+                (*matrix)[i][j] = data_interface::m_datasets[i]->variance();
+            }
+            else
+            {
+                // Calculate the covariance for the two datasets.
+            }
+        }
+    }
+
+    iteration_complete:
+
+    // Check if signal needs to be emitted to pass out results.
+    if(!data_interface::m_thread_stop)
+    {
+        emit data_interface::covariance_matrix_calculated(matrix);
+    }
+
+    // Mark thread as complete.
+    data_interface::m_thread_running = false;
 }
