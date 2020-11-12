@@ -1,9 +1,15 @@
 #include "graph/chart.h"
 
+#include <QLegendMarker>
+
 using namespace graph;
 
 chart::chart()
 {
+    // Initialize members.
+    chart::m_standard_deviations = 0;
+    chart::m_dataset_variance = 0;
+
     // Create chart instance.
     chart::m_chart = new QtCharts::QChart();
 
@@ -32,8 +38,28 @@ chart::chart()
     chart::m_series_fit->attachAxis(chart::m_axis_x);
     chart::m_series_fit->attachAxis(chart::m_axis_y);
 
+    // NOISE_P
+    chart::m_series_noise_p = new QtCharts::QLineSeries();
+    chart::m_series_noise_p->setName("noise_p");
+    chart::m_chart->addSeries(chart::m_series_noise_p);
+    chart::m_series_noise_p->attachAxis(chart::m_axis_x);
+    chart::m_series_noise_p->attachAxis(chart::m_axis_y);
+    auto noise_pen = chart::m_series_noise_p->pen();
+    noise_pen.setStyle(Qt::PenStyle::DashLine);
+    chart::m_series_noise_p->setPen(noise_pen);
+    chart::m_series_noise_p->setVisible(false);
+
+    // NOISE_M
+    chart::m_series_noise_m = new QtCharts::QLineSeries();
+    chart::m_series_noise_m->setName("noise_m");
+    chart::m_chart->addSeries(chart::m_series_noise_m);
+    chart::m_series_noise_m->attachAxis(chart::m_axis_x);
+    chart::m_series_noise_m->attachAxis(chart::m_axis_y);
+    chart::m_series_noise_m->setPen(noise_pen);
+    chart::m_series_noise_m->setVisible(false);
+
     // Configure Legend
-    chart::m_chart->legend()->setAlignment(Qt::AlignmentFlag::AlignRight);
+    chart::m_chart->legend()->setVisible(false);
 }
 
 QtCharts::QChart* chart::get_chart() const
@@ -41,47 +67,72 @@ QtCharts::QChart* chart::get_chart() const
     return chart::m_chart;
 }
 
+void chart::set_noise_range(uint32_t standard_deviations)
+{
+    // Check if the value is changing.
+    if(standard_deviations != chart::m_standard_deviations)
+    {
+        // Update member variable.
+        chart::m_standard_deviations = standard_deviations;
+
+        // Update noise plot.
+        chart::plot_noise_range();
+    }
+}
+
 void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
 {
-    // Get pointers to the data.
-    auto time = dataset->data_time();
-    auto raw = dataset->data_raw();
-    auto fit = dataset->data_fit();
-
-    // Get initial time point.
-    double t0 = 0;
-    if(!time->empty())
+    if(dataset)
     {
-        t0 = time->front();
+        // Store variance.
+        chart::m_dataset_variance = dataset->variance();
+
+        // Get pointers to the data.
+        auto time = dataset->data_time();
+        auto raw = dataset->data_raw();
+        auto fit = dataset->data_fit();
+
+        // Get initial time point.
+        double t0 = 0;
+        if(!time->empty())
+        {
+            t0 = time->front();
+        }
+
+        // Populate each series.
+        QVector<QPointF> points;
+        points.reserve(time->size());
+
+        // RAW
+        for(uint32_t i = 0; i < raw->size(); ++i)
+        {
+            points.push_back(QPointF(time->at(i) - t0, raw->at(i)));
+        }
+        chart::m_series_raw->replace(points);
+
+        // FIT
+        points.clear();
+        for(uint32_t i = 0; i < fit->size(); ++i)
+        {
+            points.push_back(QPointF(time->at(i) - t0, fit->at(i)));
+        }
+        chart::m_series_fit->replace(points);
+
+        // Plot noise.
+        chart::plot_noise_range();
     }
-
-    // Populate each series.
-    QVector<QPointF> points;
-    points.reserve(time->size());
-
-    // RAW
-    for(uint32_t i = 0; i < raw->size(); ++i)
+    else
     {
-        points.push_back(QPointF(time->at(i) - t0, raw->at(i)));
+        // Clear chart.
+        chart::m_series_raw->clear();
+        chart::m_series_fit->clear();
+        chart::m_series_noise_p->clear();
+        chart::m_series_noise_m->clear();
+        chart::m_dataset_variance = 0;
     }
-    chart::m_series_raw->replace(points);
-
-    // FIT
-    points.clear();
-    for(uint32_t i = 0; i < fit->size(); ++i)
-    {
-        points.push_back(QPointF(time->at(i) - t0, fit->at(i)));
-    }
-    chart::m_series_fit->replace(points);
 
     // Reset zoom.
     chart::zoom_reset();
-}
-void chart::clear()
-{
-    chart::m_series_raw->clear();
-    chart::m_series_fit->clear();
-    zoom_reset();
 }
 
 void chart::zoom_reset()
@@ -114,4 +165,41 @@ void chart::zoom_reset()
 
     // Set y range.
     chart::m_axis_y->setRange(y_min - buffer, y_max + buffer);
+}
+
+void chart::plot_noise_range()
+{
+    if(chart::m_standard_deviations > 0 || std::isnan(chart::m_dataset_variance))
+    {
+        // Calculate and create noise plots.
+
+        // Set up point vector for plots.
+        QVector<QPointF> range_p, range_m;
+        range_p.reserve(chart::m_series_fit->points().size());
+        range_m.reserve(chart::m_series_fit->points().size());
+
+        // Set up QPointF for standard deviation modifier.
+        QPointF modifier(0.0, chart::m_standard_deviations * std::sqrt(chart::m_dataset_variance));
+
+        // Iterate over fit to add noise range to it.
+        for(auto fit_point = chart::m_series_fit->pointsVector().begin(); fit_point != chart::m_series_fit->pointsVector().end(); ++fit_point)
+        {
+            range_p.push_back((*fit_point) + modifier);
+            range_m.push_back((*fit_point) - modifier);
+        }
+
+        // Add points to series.
+        chart::m_series_noise_p->replace(range_p);
+        chart::m_series_noise_m->replace(range_m);
+
+        // Make series visible.
+        chart::m_series_noise_p->setVisible(true);
+        chart::m_series_noise_m->setVisible(true);
+    }
+    else
+    {
+        // Disable noise plot.
+        chart::m_series_noise_p->setVisible(false);
+        chart::m_series_noise_m->setVisible(false);
+    }
 }

@@ -20,6 +20,7 @@ form_main::form_main(QWidget *parent)
     form_main::setup_toolbar_table();
     form_main::setup_table_datasets();
     form_main::setup_chartview();
+    form_main::setup_toolbar_chart();
 
     // Connect to data_interface signals.
     connect(&(form_main::m_data_interface), &data::data_interface::dataset_calculated, this, &form_main::dataset_calculated);
@@ -118,6 +119,50 @@ void form_main::setup_chartview()
     auto chart_old = form_main::ui->chartview->chart();
     form_main::ui->chartview->setChart(form_main::m_chart.get_chart());
     delete chart_old;
+}
+void form_main::setup_toolbar_chart()
+{
+    // Create new toolbar for the chart.
+    QToolBar* toolbar_chart = new QToolBar(this);
+
+    // Set vertical orientation.
+    toolbar_chart->setOrientation(Qt::Orientation::Vertical);
+
+    // Add actions for zoom.
+    auto action_zoom_all = toolbar_chart->addAction(QIcon::fromTheme("zoom-out"), "Reset Zoom");
+    auto action_zoom_rectangle = toolbar_chart->addAction(QIcon::fromTheme("zoom-in"), "Zoom Rectangle");
+    auto action_zoom_horizontal = toolbar_chart->addAction(QIcon::fromTheme("object-flip-horizontal"), "Zoom Horizontal");
+    auto action_zoom_vertical = toolbar_chart->addAction(QIcon::fromTheme("object-flip-vertical"), "Zoom Vertical");
+
+    // Add actions for noise type.
+    // Create a menu for the noise type.
+    QMenu* menu_noise = new QMenu();
+    auto action_noise_none = menu_noise->addAction("None");
+    menu_noise->addSeparator();
+    auto action_noise_68 = menu_noise->addAction("68%");
+    auto action_noise_95 = menu_noise->addAction("95%");
+    auto action_noise_99 = menu_noise->addAction("99%");
+    // Add menu to toolbutton.
+    QToolButton* toolbutton_noise = new QToolButton();
+    toolbutton_noise->setIcon(QIcon::fromTheme("list-add"));
+    toolbutton_noise->setToolTip("Variance Display");
+    toolbutton_noise->setMenu(menu_noise);
+    toolbutton_noise->setPopupMode(QToolButton::InstantPopup);
+    toolbar_chart->addSeparator();
+    toolbar_chart->addWidget(toolbutton_noise);
+
+    // Add toolbar to chart's layout.
+    form_main::ui->layout_chartview->insertWidget(0, toolbar_chart);
+
+    // Make connections.
+    connect(action_zoom_all, &QAction::triggered, this, &form_main::toolbar_zoom_all);
+    connect(action_zoom_rectangle, &QAction::triggered, this, &form_main::toolbar_zoom_rectangle);
+    connect(action_zoom_horizontal, &QAction::triggered, this, &form_main::toolbar_zoom_horizontal);
+    connect(action_zoom_vertical, &QAction::triggered, this, &form_main::toolbar_zoom_vertical);
+    connect(action_noise_none, &QAction::triggered, this, &form_main::toolbar_noise_none);
+    connect(action_noise_68, &QAction::triggered, this, &form_main::toolbar_noise_68);
+    connect(action_noise_95, &QAction::triggered, this, &form_main::toolbar_noise_95);
+    connect(action_noise_99, &QAction::triggered, this, &form_main::toolbar_noise_99);
 }
 
 void form_main::update_combobox_topics()
@@ -239,7 +284,7 @@ void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
         // Clear the plot view.
 
         // Clear the chart.
-        form_main::m_chart.clear();
+        form_main::m_chart.plot_dataset(nullptr);
 
         // Reset the sliders.
         form_main::ui->slider_basis_ratio->setValue(50);
@@ -427,6 +472,45 @@ void form_main::toolbar_table_saveas()
 void form_main::toolbar_table_open()
 {
 
+}
+
+// SLOTS - TOOLBAR_CHART
+void form_main::toolbar_zoom_all()
+{
+    // Set chart to reset the zoom.
+    form_main::m_chart.zoom_reset();
+    form_main::ui->chartview->setCursor(Qt::CursorShape::ArrowCursor);
+}
+void form_main::toolbar_zoom_rectangle()
+{
+    form_main::ui->chartview->setRubberBand(QChartView::RubberBand::RectangleRubberBand);
+    form_main::ui->chartview->setCursor(Qt::CursorShape::CrossCursor);
+}
+void form_main::toolbar_zoom_horizontal()
+{
+    form_main::ui->chartview->setRubberBand(QChartView::RubberBand::HorizontalRubberBand);
+    form_main::ui->chartview->setCursor(Qt::CursorShape::SplitHCursor);
+}
+void form_main::toolbar_zoom_vertical()
+{
+    form_main::ui->chartview->setRubberBand(QChartView::RubberBand::VerticalRubberBand);
+    form_main::ui->chartview->setCursor(Qt::CursorShape::SplitVCursor);
+}
+void form_main::toolbar_noise_none()
+{
+    form_main::m_chart.set_noise_range(0);
+}
+void form_main::toolbar_noise_68()
+{
+    form_main::m_chart.set_noise_range(1);
+}
+void form_main::toolbar_noise_95()
+{
+    form_main::m_chart.set_noise_range(2);
+}
+void form_main::toolbar_noise_99()
+{
+    form_main::m_chart.set_noise_range(3);
 }
 
 // ROS

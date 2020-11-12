@@ -35,6 +35,15 @@ private slots:
     void toolbar_table_saveas();
     void toolbar_table_open();
 
+    void toolbar_zoom_all();
+    void toolbar_zoom_rectangle();
+    void toolbar_zoom_horizontal();
+    void toolbar_zoom_vertical();
+    void toolbar_noise_none();
+    void toolbar_noise_68();
+    void toolbar_noise_95();
+    void toolbar_noise_99();
+
     void on_combobox_topics_currentTextChanged(const QString& text);
 
     void dataset_calculated(quint32 index);
@@ -50,6 +59,7 @@ private:
     void setup_toolbar_table();
     void setup_table_datasets();
     void setup_chartview();
+    void setup_toolbar_chart();
 
     void update_combobox_topics();
     void update_tree_message();

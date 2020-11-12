@@ -24,7 +24,7 @@ dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& nam
 
     // Initialize members.
     dataset::m_variance = std::numeric_limits<double>::quiet_NaN();
-    dataset::m_fit_basis_ratio = 0.5;
+    dataset::m_fit_basis_ratio = 0.01;
     dataset::m_fit_smoothing = 1.0;
     dataset::m_thread_running = false;
     dataset::m_thread_stop = false;

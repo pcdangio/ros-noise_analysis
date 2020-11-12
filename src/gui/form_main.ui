@@ -122,7 +122,14 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-          <widget class="QChartView" name="chartview"/>
+          <layout class="QHBoxLayout" name="layout_chartview">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QChartView" name="chartview"/>
+           </item>
+          </layout>
          </item>
          <item>
           <layout class="QHBoxLayout" name="layout_spline">
