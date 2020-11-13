@@ -1,6 +1,7 @@
 #include "graph/chart.h"
 
 #include <QLegendMarker>
+#include <QGraphicsLayout>
 
 using namespace graph;
 
@@ -54,6 +55,8 @@ chart::chart()
 
     // Configure Legend
     chart::m_chart->legend()->setVisible(false);
+
+    m_chart->layout()->setContentsMargins(0,0,0,0);
 }
 
 QtCharts::QChart* chart::get_chart() const
