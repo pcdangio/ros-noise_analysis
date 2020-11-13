@@ -111,6 +111,10 @@ std::string dataset::field_path() const
 {
     return dataset::m_field_path;
 }
+uint32_t dataset::size() const
+{
+    return dataset::m_data_time->size();
+}
 
 double dataset::variance() const
 {

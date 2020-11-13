@@ -32,6 +32,7 @@ public:
     std::string name() const;
     std::string topic_name() const;
     std::string field_path() const;
+    uint32_t size() const;
 
     double variance() const;
 

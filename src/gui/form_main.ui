@@ -223,6 +223,15 @@
         <attribute name="title">
          <string>Covariance Matrix</string>
         </attribute>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <layout class="QHBoxLayout" name="layout_covariance">
+           <item>
+            <widget class="QTableWidget" name="table_covariance"/>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </widget>
       </widget>
      </widget>

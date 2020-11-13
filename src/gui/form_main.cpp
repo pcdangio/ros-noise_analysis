@@ -21,6 +21,7 @@ form_main::form_main(QWidget *parent)
     form_main::setup_table_datasets();
     form_main::setup_chartview();
     form_main::setup_toolbar_chart();
+    form_main::setup_toolbar_covariance();
 
     // Connect to data_interface signals.
     connect(&(form_main::m_data_interface), &data::data_interface::dataset_calculated, this, &form_main::dataset_calculated);
@@ -141,6 +142,26 @@ void form_main::setup_toolbar_chart()
     connect(action_zoom_rectangle, &QAction::triggered, this, &form_main::toolbar_zoom_rectangle);
     connect(action_zoom_horizontal, &QAction::triggered, this, &form_main::toolbar_zoom_horizontal);
     connect(action_zoom_vertical, &QAction::triggered, this, &form_main::toolbar_zoom_vertical);
+}
+void form_main::setup_toolbar_covariance()
+{
+    // Create new toolbar for the table.
+    QToolBar* toolbar_covariance = new QToolBar(this);
+
+    // Set vertical orientation.
+    toolbar_covariance->setOrientation(Qt::Orientation::Vertical);
+
+    // Add actions.
+    auto action_calculate = toolbar_covariance->addAction(QIcon::fromTheme("media-playback-start"), "Calculate Covariance Matrix");
+    toolbar_covariance->addSeparator();
+    auto action_save = toolbar_covariance->addAction(QIcon::fromTheme("document-save"), "Save Covariance Matrix...");
+
+    // Add toolbar to table's layout.
+    form_main::ui->layout_covariance->insertWidget(0, toolbar_covariance);
+
+    // Make connections.
+    connect(action_calculate, &QAction::triggered, this, &form_main::toolbar_calculate_covariance);
+    connect(action_save, &QAction::triggered, this, &form_main::toolbar_save_covariance);
 }
 
 // UI - UPDATE
@@ -543,6 +564,16 @@ void form_main::toolbar_zoom_vertical()
 {
     form_main::ui->chartview->setRubberBand(QChartView::RubberBand::VerticalRubberBand);
     form_main::ui->chartview->setCursor(Qt::CursorShape::SplitVCursor);
+}
+
+// SLOTS - TOOLBAR_COVARIANCE
+void form_main::toolbar_calculate_covariance()
+{
+    form_main::m_data_interface.start_covariance_calculation();
+}
+void form_main::toolbar_save_covariance()
+{
+
 }
 
 // SLOTS - COMPONENTS

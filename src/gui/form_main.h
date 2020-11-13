@@ -48,6 +48,10 @@ private slots:
     void toolbar_zoom_horizontal();
     void toolbar_zoom_vertical();
 
+    // SLOTS - TOOLBAR_COVARIANCE
+    void toolbar_calculate_covariance();
+    void toolbar_save_covariance();
+
     // SLOTS - COMPONENTS
     void dataset_calculated(quint32 index);
 
@@ -76,6 +80,7 @@ private:
     void setup_table_datasets();
     void setup_chartview();
     void setup_toolbar_chart();
+    void setup_toolbar_covariance();
 
     // UI - UPDATE
     void update_combobox_topics();

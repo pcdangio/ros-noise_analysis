@@ -270,8 +270,72 @@ void data_interface::covariance_matrix_worker()
             else
             {
                 // Calculate the covariance for the two datasets.
+                // Determine which dataset has the slowest rate.
+                std::shared_ptr<const std::vector<double>> slow_time, slow_raw, slow_fit, fast_time, fast_raw, fast_fit;
+                if(data_interface::m_datasets[i]->size() > data_interface::m_datasets[j]->size())
+                {
+                    // Get slow vectors.
+                    slow_time = data_interface::m_datasets[j]->data_time();
+                    slow_raw = data_interface::m_datasets[j]->data_raw();
+                    slow_fit = data_interface::m_datasets[j]->data_fit();
+                    // Get fast vectors.
+                    fast_time = data_interface::m_datasets[i]->data_time();
+                    fast_raw = data_interface::m_datasets[i]->data_raw();
+                    fast_fit = data_interface::m_datasets[i]->data_fit();
+                }
+                else
+                {
+                    // Get slow vectors.
+                    slow_time = data_interface::m_datasets[i]->data_time();
+                    slow_raw = data_interface::m_datasets[i]->data_raw();
+                    slow_fit = data_interface::m_datasets[i]->data_fit();
+                    // Get fast vectors.
+                    fast_time = data_interface::m_datasets[j]->data_time();
+                    fast_raw = data_interface::m_datasets[j]->data_raw();
+                    fast_fit = data_interface::m_datasets[j]->data_fit();
+                }
+                // Iterate over slow dataset.
+                // Initialize covariance sum.
+                double covariance = 0;
+                // Initialize fast tracker.
+                uint32_t f = 0;
+                double fast_point = fast_raw->front() - fast_fit->front();
+                for(uint32_t s = 0; s < slow_time->size(); ++s)
+                {
+                    // Get the time of the current slow point.
+                    double current_time = slow_time->at(s);
+                    // Calculate the point for the slow dataset.
+                    double slow_point = slow_raw->at(s) - slow_fit->at(s);
+                    // Iterate forward through fast dataset to find the last point before current time.
+                    for(; f < fast_time->size(); ++f)
+                    {
+                        // Check if fast time is greater.
+                        if(fast_time->at(f) > current_time)
+                        {
+                            // Calculate covariance sum using the last set fast_point (at fast time <= current_time)
+                            covariance += slow_point * fast_point;
+                        }
+                        // Calculate fast_point for this time point in fast.
+                        fast_point = fast_raw->at(i) - fast_fit->at(i);
+                    }
+                }
+                // Finish covariance calculation.
+                covariance /= static_cast<double>(slow_time->size());
+                // Store covariance in both triangles of the matrix.
+                (*matrix)[i][j] = covariance;
+                (*matrix)[j][i] = covariance;
             }
         }
+    }
+
+    // Print
+    for(auto i = matrix->begin(); i != matrix->end(); ++i)
+    {
+        for(auto j = i->begin(); j != i->end(); ++j)
+        {
+            std::cout << *j << "\t";
+        }
+        std::cout << std::endl;
     }
 
     iteration_complete:
