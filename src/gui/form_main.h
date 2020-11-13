@@ -49,11 +49,11 @@ private slots:
     void toolbar_zoom_vertical();
 
     // SLOTS - TOOLBAR_COVARIANCE
-    void toolbar_calculate_covariance();
     void toolbar_save_covariance();
 
     // SLOTS - COMPONENTS
     void dataset_calculated(quint32 index);
+    void covariance_matrix_calculated();
 
 private:
     Ui::form_main *ui;

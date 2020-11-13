@@ -26,14 +26,12 @@ class data_interface
     Q_OBJECT
 public:
     data_interface();
-    ~data_interface();
 
     bool load_bag(std::string bag_path);
     std::string bag_name() const;
     std::set<std::string> bag_topics() const;
 
     std::shared_ptr<candidate_topic_t> get_candidate_topic(const std::string& topic_name) const;
-
 
     bool add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field);
     bool remove_dataset(uint32_t index);
@@ -42,24 +40,21 @@ public:
 
     uint32_t n_datasets() const;
     std::shared_ptr<dataset> get_dataset(uint32_t index) const;
+    std::shared_ptr<std::vector<std::vector<double>>> get_covariance_matrix() const;
 
-    bool start_covariance_calculation();
-    void stop_covariance_calculation();
 signals:
     void dataset_calculated(quint32 index);
-    void covariance_matrix_calculated(std::shared_ptr<std::vector<std::vector<double>>> matrix);
+    void covariance_matrix_calculated();
 
 private:
     std::shared_ptr<rosbag::Bag> m_bag;
 
     std::deque<std::shared_ptr<dataset>> m_datasets;
-    std::shared_ptr<dataset> m_selected_dataset;
-
     void dataset_notifier(uint64_t address);
 
-    boost::thread m_thread;
-    std::atomic<bool> m_thread_running;
-    std::atomic<bool> m_thread_stop;
+    std::shared_ptr<std::vector<std::vector<double>>> m_covariance_matrix;
+    boost::thread m_thread_covariance;
+    mutable std::mutex m_mutex_covariance;
     void covariance_matrix_worker();
 };
 

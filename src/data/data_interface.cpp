@@ -11,14 +11,8 @@ data_interface::data_interface()
     // Create new bag instance.
     data_interface::m_bag = std::make_shared<rosbag::Bag>();
 
-    // Initialize members.
-    data_interface::m_thread_running = false;
-    data_interface::m_thread_stop = false;
-}
-data_interface::~data_interface()
-{
-    // Cancel covariance calculation if it's running.
-    data_interface::stop_covariance_calculation();
+    // Initialize covariance matrix.
+    data_interface::m_covariance_matrix = std::make_shared<std::vector<std::vector<double>>>();
 }
 
 bool data_interface::load_bag(std::string bag_path)
@@ -158,6 +152,9 @@ bool data_interface::remove_dataset(uint32_t index)
     // Remove the dataset at the sepcified index.
     data_interface::m_datasets.erase(data_interface::m_datasets.begin() + index);
 
+    // Update covariance matrix.
+    data_interface::m_thread_covariance = boost::thread(&data_interface::covariance_matrix_worker, this);
+
     return true;
 }
 bool data_interface::move_dataset(uint32_t old_index, uint32_t new_index)
@@ -177,6 +174,9 @@ bool data_interface::move_dataset(uint32_t old_index, uint32_t new_index)
     // Insert at new index.
     data_interface::m_datasets.insert(data_interface::m_datasets.begin() + new_index, move_dataset);
 
+    // Update covariance matrix.
+    data_interface::m_thread_covariance = boost::thread(&data_interface::covariance_matrix_worker, this);
+
     return true;
 }
 void data_interface::clear_datasets()
@@ -189,6 +189,9 @@ void data_interface::clear_datasets()
 
     // Clear all datasets.
     data_interface::m_datasets.clear();
+
+    // Update covariance matrix.
+    data_interface::m_thread_covariance = boost::thread(&data_interface::covariance_matrix_worker, this);
 }
 
 uint32_t data_interface::n_datasets() const
@@ -199,9 +202,17 @@ std::shared_ptr<dataset> data_interface::get_dataset(uint32_t index) const
 {
     return data_interface::m_datasets[index];
 }
+std::shared_ptr<std::vector<std::vector<double>>> data_interface::get_covariance_matrix() const
+{
+    std::lock_guard<std::mutex> scoped_lock(data_interface::m_mutex_covariance);
+    return data_interface::m_covariance_matrix;
+}
 
 void data_interface::dataset_notifier(uint64_t address)
 {
+    // Start the covariance calculation thread.
+    data_interface::m_thread_covariance = boost::thread(&data_interface::covariance_matrix_worker, this);
+
     // Find the index of the sending dataset's address
     for(uint32_t i = 0; i < data_interface::m_datasets.size(); ++i)
     {
@@ -215,34 +226,11 @@ void data_interface::dataset_notifier(uint64_t address)
     }
 }
 
-
-bool data_interface::start_covariance_calculation()
-{
-    if(data_interface::m_thread_running)
-    {
-        return false;
-    }
-
-    // Start thread.
-    data_interface::m_thread_running = true;
-    data_interface::m_thread_stop = false;
-    data_interface::m_thread = boost::thread(&data_interface::covariance_matrix_worker, this);
-
-    return true;
-}
-void data_interface::stop_covariance_calculation()
-{
-    if(data_interface::m_thread_running)
-    {
-        data_interface::m_thread_stop = true;
-        data_interface::m_thread.join();
-    }
-}
 void data_interface::covariance_matrix_worker()
 {
-    // ASSUME FORM PREVENTS CHANGES TO DATASET WHILE CALCULATION RUNNING
+    // This calculation happens very quickly.
 
-    // Create covariance matrix and fill it with zeros so it can be indexed.
+    // Create new covariance matrix and fill it with zeros so it can be indexed.
     auto matrix = std::make_shared<std::vector<std::vector<double>>>();
     for(uint32_t j = 0; j < data_interface::m_datasets.size(); ++j)
     {
@@ -254,13 +242,6 @@ void data_interface::covariance_matrix_worker()
     {
         for(uint32_t j = i; j < data_interface::m_datasets.size(); ++j)
         {
-            // Check if stop required.
-            if(data_interface::m_thread_stop)
-            {
-                // Use goto to exit both loops.
-                goto iteration_complete;
-            }
-
             // Check if on diagonal.
             if(i == j)
             {
@@ -328,24 +309,11 @@ void data_interface::covariance_matrix_worker()
         }
     }
 
-    // Print
-    for(auto i = matrix->begin(); i != matrix->end(); ++i)
-    {
-        for(auto j = i->begin(); j != i->end(); ++j)
-        {
-            std::cout << *j << "\t";
-        }
-        std::cout << std::endl;
-    }
+    // Store new covariance matrix with thread protection.
+    data_interface::m_mutex_covariance.lock();
+    data_interface::m_covariance_matrix = matrix;
+    data_interface::m_mutex_covariance.unlock();
 
-    iteration_complete:
-
-    // Check if signal needs to be emitted to pass out results.
-    if(!data_interface::m_thread_stop)
-    {
-        emit data_interface::covariance_matrix_calculated(matrix);
-    }
-
-    // Mark thread as complete.
-    data_interface::m_thread_running = false;
+    // Signal that matrix has been calculated.
+    emit data_interface::covariance_matrix_calculated();
 }

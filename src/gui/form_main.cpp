@@ -25,6 +25,7 @@ form_main::form_main(QWidget *parent)
 
     // Connect to data_interface signals.
     connect(&(form_main::m_data_interface), &data::data_interface::dataset_calculated, this, &form_main::dataset_calculated);
+    connect(&(form_main::m_data_interface), &data::data_interface::covariance_matrix_calculated, this, &form_main::covariance_matrix_calculated);
 
     // Set up node handle.
     form_main::m_node = std::make_shared<ros::NodeHandle>();
@@ -152,15 +153,12 @@ void form_main::setup_toolbar_covariance()
     toolbar_covariance->setOrientation(Qt::Orientation::Vertical);
 
     // Add actions.
-    auto action_calculate = toolbar_covariance->addAction(QIcon::fromTheme("media-playback-start"), "Calculate Covariance Matrix");
-    toolbar_covariance->addSeparator();
     auto action_save = toolbar_covariance->addAction(QIcon::fromTheme("document-save"), "Save Covariance Matrix...");
 
     // Add toolbar to table's layout.
     form_main::ui->layout_covariance->insertWidget(0, toolbar_covariance);
 
     // Make connections.
-    connect(action_calculate, &QAction::triggered, this, &form_main::toolbar_calculate_covariance);
     connect(action_save, &QAction::triggered, this, &form_main::toolbar_save_covariance);
 }
 
@@ -567,10 +565,6 @@ void form_main::toolbar_zoom_vertical()
 }
 
 // SLOTS - TOOLBAR_COVARIANCE
-void form_main::toolbar_calculate_covariance()
-{
-    form_main::m_data_interface.start_covariance_calculation();
-}
 void form_main::toolbar_save_covariance()
 {
 
@@ -601,6 +595,10 @@ void form_main::dataset_calculated(quint32 index)
         // Update the plot view for selected dataset.
         form_main::update_plot_view(calculated_dataset);
     }
+}
+void form_main::covariance_matrix_calculated()
+{
+
 }
 
 // ROS
