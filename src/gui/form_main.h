@@ -38,9 +38,6 @@ private slots:
     void toolbar_table_clear();
     void toolbar_table_up();
     void toolbar_table_down();
-    void toolbar_table_save();
-    void toolbar_table_saveas();
-    void toolbar_table_open();
 
     // SLOTS - TOOLBAR CHART
     void toolbar_zoom_all();

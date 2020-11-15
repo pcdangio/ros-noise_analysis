@@ -74,12 +74,6 @@ void form_main::setup_toolbar_table()
     auto action_up = toolbar_table->addAction(QIcon::fromTheme("go-up"), "Move field up");
     auto action_down = toolbar_table->addAction(QIcon::fromTheme("go-down"), "Move field down");
 
-    // Add actions for analysis saving.
-    toolbar_table->addSeparator();
-    auto action_save = toolbar_table->addAction(QIcon::fromTheme("document-save"), "Save analysis...");
-    auto action_saveas = toolbar_table->addAction(QIcon::fromTheme("document-save-as"), "Save analysis as...");
-    auto action_open = toolbar_table->addAction(QIcon::fromTheme("document-open"), "Open analysis...");
-
     // Add toolbar to table's layout.
     form_main::ui->layout_fields->insertWidget(0, toolbar_table);
 
@@ -89,9 +83,6 @@ void form_main::setup_toolbar_table()
     connect(action_clear, &QAction::triggered, this, &form_main::toolbar_table_clear);
     connect(action_up, &QAction::triggered, this, &form_main::toolbar_table_up);
     connect(action_down, &QAction::triggered, this, &form_main::toolbar_table_down);
-    connect(action_save, &QAction::triggered, this, &form_main::toolbar_table_save);
-    connect(action_saveas, &QAction::triggered, this, &form_main::toolbar_table_saveas);
-    connect(action_open, &QAction::triggered, this, &form_main::toolbar_table_open);
 }
 void form_main::setup_table_datasets()
 {
@@ -508,18 +499,6 @@ void form_main::toolbar_table_down()
 
     // Select the new index to maintain selection.
     form_main::ui->table_datasets->selectRow(new_index);
-}
-void form_main::toolbar_table_save()
-{
-
-}
-void form_main::toolbar_table_saveas()
-{
-
-}
-void form_main::toolbar_table_open()
-{
-
 }
 
 // SLOTS - TOOLBAR_CHART
