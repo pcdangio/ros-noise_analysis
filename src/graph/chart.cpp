@@ -104,14 +104,14 @@ void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
         double standard_deviation = std::sqrt(dataset->variance());
         // NOISE_P
         points.clear();
-        for(uint32_t i = 0; i < time->size(); ++i)
+        for(uint32_t i = 0; i < fit->size(); ++i)
         {
             points.push_back(QPointF(time->at(i) - t0, fit->at(i) + standard_deviation));
         }
         chart::m_series_noise_p->replace(points);
         // NOISE_M
         points.clear();
-        for(uint32_t i = 0; i < time->size(); ++i)
+        for(uint32_t i = 0; i < fit->size(); ++i)
         {
             points.push_back(QPointF(time->at(i) - t0, fit->at(i) - standard_deviation));
         }
@@ -153,6 +153,12 @@ void chart::zoom_reset()
     {
         y_min = std::min(y_min, point->y());
         y_max = std::max(y_max, point->y());
+    }
+    // Check if y_min == y_max
+    if(y_min == y_max)
+    {
+        y_min -= 1.0;
+        y_max += 1.0;
     }
 
     // Calculate buffer.
