@@ -29,6 +29,7 @@ public:
     std::shared_ptr<const std::vector<double>> data_fit() const;
 
     // PROPERTIES
+    void name(const std::string& value);
     std::string name() const;
     std::string topic_name() const;
     std::string field_path() const;

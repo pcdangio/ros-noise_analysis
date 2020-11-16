@@ -199,6 +199,9 @@ void form_main::add_tree_item(const message_introspection::definition_tree_t& de
 }
 void form_main::update_table_datasets()
 {
+    // Disable table signals.
+    form_main::ui->table_datasets->blockSignals(true);
+
     // Update table size.
     form_main::ui->table_datasets->setRowCount(form_main::m_data_interface.n_datasets());
 
@@ -234,6 +237,9 @@ void form_main::update_table_datasets()
         item_path->setFlags(item_path->flags() & ~Qt::ItemFlag::ItemIsEditable);
         form_main::ui->table_datasets->setItem(i, 2, item_path);
     }
+
+    // Enable table signals.
+    form_main::ui->table_datasets->blockSignals(false);
 }
 void form_main::update_plot_view(std::shared_ptr<data::dataset> dataset)
 {
@@ -308,6 +314,34 @@ void form_main::on_table_datasets_cellClicked(int row, int /*column*/)
 {
     // Update the plot view for selected index.
     form_main::update_plot_view(form_main::m_data_interface.get_dataset(row));
+}
+void form_main::on_table_datasets_cellChanged(int row, int column)
+{
+    // Check that the column is the variable name column.
+    if(column == 0)
+    {
+        // Get the dataset for the row.
+        auto dataset = form_main::m_data_interface.get_dataset(row);
+        if(dataset)
+        {
+            // Get new name from table.
+            auto new_name = form_main::ui->table_datasets->item(row, column)->text().simplified().toStdString();
+
+            // Check that the new name is valid.
+            if(!new_name.empty())
+            {
+                // Update the dataset name.
+                dataset->name(new_name);
+            }
+            else
+            {
+                // Restore the variable name.
+                form_main::ui->table_datasets->blockSignals(true);
+                form_main::ui->table_datasets->item(row, column)->setText(QString::fromStdString(dataset->name()));
+                form_main::ui->table_datasets->blockSignals(false);
+            }
+        }
+    }
 }
 void form_main::on_slider_bases_valueChanged(int value)
 {
@@ -544,7 +578,9 @@ void form_main::dataset_calculated(quint32 index)
         auto calculated_dataset = form_main::m_data_interface.get_dataset(selected_index);
 
         // Update variance display in table.
+        form_main::ui->table_datasets->blockSignals(true);
         form_main::ui->table_datasets->item(selected_index, 1)->setText(QString::number(calculated_dataset->variance()));
+        form_main::ui->table_datasets->blockSignals(false);
 
         // Update the plot view for selected dataset.
         form_main::update_plot_view(calculated_dataset);

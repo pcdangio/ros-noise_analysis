@@ -99,6 +99,10 @@ std::shared_ptr<const std::vector<double>> dataset::data_fit() const
 }
 
 // PROPERTIES
+void dataset::name(const std::string& value)
+{
+    dataset::m_name = value;
+}
 std::string dataset::name() const
 {
     return dataset::m_name;

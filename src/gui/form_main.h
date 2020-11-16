@@ -29,6 +29,7 @@ private slots:
     void on_button_open_bag_clicked();
     void on_combobox_topics_currentTextChanged(const QString& text);
     void on_table_datasets_cellClicked(int row, int column);
+    void on_table_datasets_cellChanged(int row, int column);
     void on_slider_bases_valueChanged(int value);
     void on_slider_smoothness_valueChanged(int value);
 
