@@ -5,6 +5,7 @@
 
 using namespace graph;
 
+// CONSTRUCTORS
 chart::chart()
 {
     // Create chart instance.
@@ -59,11 +60,11 @@ chart::chart()
     m_chart->layout()->setContentsMargins(0,0,0,0);
 }
 
+// METHODS
 QtCharts::QChart* chart::get_chart() const
 {
     return chart::m_chart;
 }
-
 void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
 {
     if(dataset)
@@ -129,7 +130,6 @@ void chart::plot_dataset(const std::shared_ptr<data::dataset>& dataset)
     // Reset zoom.
     chart::zoom_reset();
 }
-
 void chart::zoom_reset()
 {
     // Check if any data exists.

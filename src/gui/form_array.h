@@ -26,14 +26,18 @@ public:
     ~form_array();
 
 private slots:
+    /// \brief Handles buttonBox::accepted signals.
     void on_buttonBox_accepted();
+    /// \brief Handles buttonBox::rejected signals.
     void on_buttonBox_rejected();
 
 private:
     // UI
+    /// \brief The UI instance of the form.
     Ui::form_array *ui;
 
     // COMPONENTS
+    /// \brief The candidate field instance the form manages.
     std::shared_ptr<data::candidate_field_t> m_candidate_field;
 };
 

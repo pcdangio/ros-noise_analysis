@@ -6,12 +6,14 @@
 
 using namespace data;
 
+// CONSTRUCTORS
 data_interface::data_interface()
 {
     // Create new bag instance.
     data_interface::m_bag = std::make_shared<rosbag::Bag>();
 }
 
+// BAG METHODS
 bool data_interface::load_bag(std::string bag_path)
 {
     // Try to load the bag file.
@@ -58,6 +60,7 @@ std::set<std::string> data_interface::bag_topics() const
     return unique_topics;
 }
 
+// CANDIDATE METHODS
 std::shared_ptr<candidate_topic_t> data_interface::get_candidate_topic(const std::string& topic_name) const
 {
     // Check if bag file is open.
@@ -89,6 +92,7 @@ std::shared_ptr<candidate_topic_t> data_interface::get_candidate_topic(const std
     return output;
 }
 
+// DATASET MANAGEMENT
 bool data_interface::add_dataset(const std::shared_ptr<candidate_field_t>& candidate_field)
 {    
     // Check if the dataset already exists, and create a set of names.
@@ -182,6 +186,7 @@ void data_interface::clear_datasets()
     data_interface::m_datasets.clear();
 }
 
+// DATASET ACCESS
 uint32_t data_interface::n_datasets() const
 {
     return data_interface::m_datasets.size();
@@ -191,6 +196,7 @@ std::shared_ptr<dataset> data_interface::get_dataset(uint32_t index) const
     return data_interface::m_datasets[index];
 }
 
+// CALLBACKS
 void data_interface::dataset_notifier(uint64_t address)
 {
     // Find the index of the sending dataset's address

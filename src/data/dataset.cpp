@@ -8,6 +8,7 @@
 
 using namespace data;
 
+// CONSTRUCTORS
 dataset::dataset(const std::shared_ptr<rosbag::Bag>& bag, const std::string& name, const std::string& topic_name, const std::string& field_path, std::function<void(uint64_t)> notifier)
 {
     // Store items.
@@ -35,6 +36,7 @@ dataset::~dataset()
     dataset::cancel();
 }
 
+// ACTIONS
 bool dataset::load()
 {
     // Check if the dataset is currently loading or calculating.
