@@ -3,5 +3,5 @@
 *.user
 *.autosave
 
-# Ignore documentation files
-doc/
+# Ignore documentation HTML files
+doc/html/
